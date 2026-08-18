@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,7 +73,7 @@ fun MainScreen(
 }
 
 @Composable
-private fun MainScreenContent(
+internal fun MainScreenContent(
   accesses: List<AccessEntity>,
   onRegisterTestAccess: () -> Unit,
   onDeleteAllAccesses: () -> Unit,
@@ -94,7 +95,9 @@ private fun MainScreenContent(
 
     Button(
       onClick = onRegisterTestAccess,
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier
+        .fillMaxWidth()
+        .testTag("RegisterTestAccessButton"),
     ) {
       Text("Registrar evento de prueba")
     }

@@ -2,9 +2,8 @@ package org.popisalerta.app.ui.main
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.rules.ActivityScenarioRule
 import org.junit.Rule
 import org.junit.Test
 
@@ -20,18 +19,24 @@ class MainScreenTest {
       MainScreen(onItemClick = {})
     }
 
-    // Either loading or success state should be present
-    composeTestRule.onNodeWithText("Access Logs")
+    // En estado Success, la pantalla muestra "Popis Alerta"
+    composeTestRule.onNodeWithText("Popis Alerta")
       .assertExists()
   }
 
   @Test
   fun mainScreen_hasTestAccessButton() {
+    // Probamos directamente el contenido con datos vacíos, sin ViewModel
     composeTestRule.setContent {
-      MainScreen(onItemClick = {})
+      MainScreenContent(
+        accesses = emptyList(),
+        onRegisterTestAccess = {},
+        onDeleteAllAccesses = {},
+      )
     }
 
-    composeTestRule.onNodeWithContentDescription("Register test access")
+    composeTestRule
+      .onNodeWithTag("RegisterTestAccessButton")
       .assertExists()
   }
 }
