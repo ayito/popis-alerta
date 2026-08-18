@@ -18,11 +18,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        DefaultAccessRepository(
-            AccessDatabase.getInstance(applicationContext).accessDao()
-        ).also { accessRepository ->
-            lifecycleScope.launch {
-                accessRepository.logAccess(APP_OPEN_TRIGGER_SOURCE)
+        if (savedInstanceState == null) {
+            DefaultAccessRepository(
+                AccessDatabase.getInstance(applicationContext).accessDao()
+            ).also { accessRepository ->
+                lifecycleScope.launch {
+                    accessRepository.logAccess(APP_OPEN_TRIGGER_SOURCE)
+                }
             }
         }
 
