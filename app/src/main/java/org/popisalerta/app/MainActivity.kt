@@ -19,12 +19,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         if (savedInstanceState == null) {
-            DefaultAccessRepository(
-                AccessDatabase.getInstance(applicationContext).accessDao()
-            ).also { accessRepository ->
-                lifecycleScope.launch {
-                    accessRepository.logAccess(APP_OPEN_TRIGGER_SOURCE)
-                }
+            val accessLogger =
+                AppAccessLogger(
+                    DefaultAccessRepository(
+                        AccessDatabase.getInstance(applicationContext).accessDao()
+                    )
+                )
+
+            lifecycleScope.launch {
+                accessLogger.logAppOpen()
             }
         }
 
@@ -41,7 +44,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private companion object {
-        const val APP_OPEN_TRIGGER_SOURCE = "APP_OPEN"
-    }
 }
