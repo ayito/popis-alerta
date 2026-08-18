@@ -4,6 +4,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.performClick
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -14,15 +17,24 @@ class MainScreenTest {
   val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
-  fun mainScreen_showsInitialLoadingOrSuccessState() {
-    composeTestRule.setContent {
-      MainScreen(onItemClick = {})
-    }
+  fun mainScreenContent_showsEmptyState() {
+      composeTestRule.setContent {
+          MainScreenContent(
+              accesses = emptyList(),
+              onRegisterTestAccess = {},
+              onDeleteAllAccesses = {},
+          )
+      }
 
-    // En estado Success, la pantalla muestra "Popis Alerta"
-    composeTestRule.onNodeWithText("Popis Alerta")
-      .assertExists()
-  }
+      composeTestRule.onNodeWithText("Popis Alerta")
+        .assertExists()
+     
+      composeTestRule.onNodeWithText("Eventos registrados: 0")
+        .assertExists()
+
+      composeTestRule.onNodeWithText("Todavía no hay eventos registrados.")
+        .assertExists()
+    }
 
   @Test
   fun mainScreen_hasTestAccessButton() {
@@ -39,4 +51,28 @@ class MainScreenTest {
       .onNodeWithTag("RegisterTestAccessButton")
       .assertExists()
   }
+
+  @Test
+  fun mainScreenContent_registerTestAccessButtonInvokesCallback() {
+      var registerTestAccessCalls = 0
+
+      composeTestRule.setContent {
+          MainScreenContent(
+              accesses = emptyList(),
+              onRegisterTestAccess = { registerTestAccessCalls++ },
+              onDeleteAllAccesses = {},
+          )
+      }
+
+      composeTestRule
+        .onNodeWithText("Todavía no hay eventos registrados.")
+        .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithTag("RegisterTestAccessButton")
+            .performClick()
+
+        assertEquals(1, registerTestAccessCalls)
+    }
+
 }
