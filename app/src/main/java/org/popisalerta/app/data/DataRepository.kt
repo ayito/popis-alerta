@@ -1,38 +1,39 @@
 package org.popisalerta.app.data
 
+import kotlinx.coroutines.flow.Flow
 import org.popisalerta.app.data.local.AccessDao
 import org.popisalerta.app.data.local.AccessEntity
-import kotlinx.coroutines.flow.Flow
 
 interface AccessRepository {
-  fun observeAll(): Flow<List<AccessEntity>>
+    fun observeAll(): Flow<List<AccessEntity>>
 
-  fun observeSince(startMs: Long): Flow<List<AccessEntity>>
+    fun observeSince(startMs: Long): Flow<List<AccessEntity>>
 
-  suspend fun logTestAccess(): Long
+    suspend fun logAccess(triggerSource: String): Long
 
-  suspend fun deleteAll()
+    suspend fun logTestAccess(): Long
+
+    suspend fun deleteAll()
 }
 
-class DefaultAccessRepository(
-  private val accessDao: AccessDao,
-) : AccessRepository {
-  override fun observeAll(): Flow<List<AccessEntity>> = accessDao.observeAll()
+class DefaultAccessRepository(private val accessDao: AccessDao) : AccessRepository {
+    override fun observeAll(): Flow<List<AccessEntity>> = accessDao.observeAll()
 
-  override fun observeSince(startMs: Long): Flow<List<AccessEntity>> =
-    accessDao.observeSince(startMs)
+    override fun observeSince(startMs: Long): Flow<List<AccessEntity>> =
+        accessDao.observeSince(startMs)
 
-  override suspend fun logTestAccess(): Long =
-    accessDao.insert(
-      AccessEntity(
-        timestamp = System.currentTimeMillis(),
-        triggerSource = TEST_TRIGGER_SOURCE,
-      ),
+    override suspend fun logAccess(triggerSource: String): Long = accessDao.insert(
+        AccessEntity(
+            timestamp = System.currentTimeMillis(),
+            triggerSource = triggerSource
+        )
     )
 
-  override suspend fun deleteAll() = accessDao.deleteAll()
+    override suspend fun logTestAccess(): Long = logAccess(TEST_TRIGGER_SOURCE)
 
-  private companion object {
-    const val TEST_TRIGGER_SOURCE = "TEST"
-  }
+    override suspend fun deleteAll() = accessDao.deleteAll()
+
+    private companion object {
+        const val TEST_TRIGGER_SOURCE = "TEST"
+    }
 }

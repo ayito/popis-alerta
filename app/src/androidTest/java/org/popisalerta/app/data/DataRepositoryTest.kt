@@ -12,16 +12,17 @@ import org.junit.Test
 import org.popisalerta.app.data.local.AccessDatabase
 
 class DataRepositoryTest {
-    
     private lateinit var database: AccessDatabase
     private lateinit var repository: DefaultAccessRepository
 
     @Before
     fun setUp() {
-        database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            AccessDatabase::class.java,
-        ).build()
+        database =
+            Room
+                .inMemoryDatabaseBuilder(
+                    ApplicationProvider.getApplicationContext(),
+                    AccessDatabase::class.java,
+                ).build()
 
         repository = DefaultAccessRepository(database.accessDao())
     }
@@ -41,5 +42,15 @@ class DataRepositoryTest {
         assertEquals(1, accesses.size)
         assertEquals(id, accesses.single().id)
         assertEquals("TEST", accesses.single().triggerSource)
+    }
+
+    @Test
+    fun logAccess_insertsAccessWithProvidedTriggerSource() = runBlocking {
+        val id = repository.logAccess("APP_OPEN")
+
+        val access = repository.observeAll().first().single()
+
+        assertEquals(id, access.id)
+        assertEquals("APP_OPEN", access.triggerSource)
     }
 }

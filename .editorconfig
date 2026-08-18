@@ -1,0 +1,22 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+# CORRECCIÓN: El valor correcto para proyectos de Android ahora es 'android_studio'
+ktlint_code_style = android_studio
+
+# Desactivar regla de minúsculas en funciones para componentes @Composable de Jetpack Compose
+ktlint_standard_function-naming = disabled
+
+# Desactivar regla de nombres de propiedades ocultas para patrones de ViewModels (_uiState)
+ktlint_standard_backing-property-naming = disabled
+
+# Desactivar coincidencia estricta de nombre de archivo (evita problemas con clases internas o tests)
+ktlint_standard_filename = disabled
