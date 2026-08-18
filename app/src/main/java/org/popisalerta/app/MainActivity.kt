@@ -8,11 +8,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import org.popisalerta.app.data.DefaultAccessRepository
+import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.theme.PopisAlertaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        DefaultAccessRepository(
+            AccessDatabase.getInstance(applicationContext).accessDao()
+        ).also { accessRepository ->
+            lifecycleScope.launch {
+                accessRepository.logAccess(APP_OPEN_TRIGGER_SOURCE)
+            }
+        }
 
         enableEdgeToEdge()
         setContent {
@@ -20,8 +32,14 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
-                ) { MainNavigation() }
+                ) {
+                    MainNavigation()
+                }
             }
         }
+    }
+
+    private companion object {
+        const val APP_OPEN_TRIGGER_SOURCE = "APP_OPEN"
     }
 }
