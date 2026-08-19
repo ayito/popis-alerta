@@ -29,10 +29,19 @@ class MainScreenViewModel(private val accessRepository: AccessRepository) : View
         }
     }
 
+    fun registerMainScreenOpen() {
+        viewModelScope.launch {
+            accessRepository.logAccess(MAIN_SCREEN_OPEN_TRIGGER_SOURCE)
+        }
+    }
+
     fun deleteAllAccesses() {
         viewModelScope.launch {
             accessRepository.deleteAll()
         }
+    }
+    private companion object {
+        const val MAIN_SCREEN_OPEN_TRIGGER_SOURCE = "MAIN_SCREEN_OPEN"
     }
 }
 

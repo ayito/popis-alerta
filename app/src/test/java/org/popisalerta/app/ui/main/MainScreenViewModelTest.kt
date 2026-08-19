@@ -55,6 +55,20 @@ class MainScreenViewModelTest {
     }
 
     @Test
+    fun `registerMainScreenOpen adds a main screen open event to the list`() = runTest {
+        val fakeRepo = FakeAccessRepository()
+        val viewModel = MainScreenViewModel(fakeRepo)
+
+        viewModel.registerMainScreenOpen()
+
+        val state = viewModel.uiState.first()
+        assertTrue(state is MainScreenUiState.Success)
+        val accesses = (state as MainScreenUiState.Success).accesses
+        assertEquals(1, accesses.size)
+        assertEquals("MAIN_SCREEN_OPEN", accesses.first().triggerSource)
+    }
+
+    @Test
     fun `deleteAllAccesses clears the list`() = runTest {
         val fakeRepo = FakeAccessRepository()
         val viewModel = MainScreenViewModel(fakeRepo)
