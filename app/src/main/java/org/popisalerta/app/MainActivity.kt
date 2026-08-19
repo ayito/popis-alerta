@@ -10,8 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import org.popisalerta.app.data.DefaultAccessRepository
-import org.popisalerta.app.data.local.AccessDatabase
+import org.popisalerta.app.data.AccessRepositoryProvider
 import org.popisalerta.app.theme.PopisAlertaTheme
 
 class MainActivity : ComponentActivity() {
@@ -23,9 +22,7 @@ class MainActivity : ComponentActivity() {
 
         accessLogger =
             AppAccessLogger(
-                DefaultAccessRepository(
-                    AccessDatabase.getInstance(applicationContext).accessDao()
-                )
+                AccessRepositoryProvider.create(applicationContext)
             )
 
         hasResumed = savedInstanceState?.getBoolean(HAS_RESUMED_STATE_KEY) ?: false
@@ -41,7 +38,7 @@ class MainActivity : ComponentActivity() {
             PopisAlertaTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     MainNavigation()
                 }
