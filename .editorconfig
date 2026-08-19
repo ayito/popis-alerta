@@ -9,14 +9,13 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 
 [*.{kt,kts}]
-# CORRECCIÓN: El valor correcto para proyectos de Android ahora es 'android_studio'
+# Formato oficial moderno para Ktlint >= 1.0
 ktlint_code_style = android_studio
 
-# Desactivar regla de minúsculas en funciones para componentes @Composable de Jetpack Compose
+# Corrección de reglas para que no cuelguen el formateador (Sintaxis moderna)
 ktlint_standard_function-naming = disabled
-
-# Desactivar regla de nombres de propiedades ocultas para patrones de ViewModels (_uiState)
 ktlint_standard_backing-property-naming = disabled
-
-# Desactivar coincidencia estricta de nombre de archivo (evita problemas con clases internas o tests)
 ktlint_standard_filename = disabled
+
+# Alternativa moderna si usas la última versión de Ktlint (descomenta si las de arriba fallan):
+# ij_kotlin_allow_trailing_comma = true
