@@ -18,7 +18,20 @@ class AppAccessLoggerTest {
 
         assertEquals(
             listOf(AppAccessLogger.APP_OPEN_TRIGGER_SOURCE),
-            repository.loggedTriggerSources,
+            repository.loggedTriggerSources
+        )
+    }
+
+    @Test
+    fun logAppResume_logsAppResumeTriggerSource() = runTest {
+        val repository = RecordingAccessRepository()
+        val logger = AppAccessLogger(repository)
+
+        logger.logAppResume()
+
+        assertEquals(
+            listOf(AppAccessLogger.APP_RESUME_TRIGGER_SOURCE),
+            repository.loggedTriggerSources
         )
     }
 }
@@ -35,8 +48,7 @@ private class RecordingAccessRepository : AccessRepository {
         return loggedTriggerSources.size.toLong()
     }
 
-    override suspend fun logTestAccess(): Long =
-        logAccess("TEST")
+    override suspend fun logTestAccess(): Long = logAccess("TEST")
 
     override suspend fun deleteAll() = Unit
 }

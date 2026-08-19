@@ -15,17 +15,22 @@ import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.theme.PopisAlertaTheme
 
 class MainActivity : ComponentActivity() {
+    private lateinit var accessLogger: AppAccessLogger
+    private var hasResumed = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (savedInstanceState == null) {
-            val accessLogger =
-                AppAccessLogger(
-                    DefaultAccessRepository(
-                        AccessDatabase.getInstance(applicationContext).accessDao()
-                    )
+        accessLogger =
+            AppAccessLogger(
+                DefaultAccessRepository(
+                    AccessDatabase.getInstance(applicationContext).accessDao()
                 )
+            )
 
+        hasResumed = savedInstanceState?.getBoolean(HAS_RESUMED_STATE_KEY) ?: false
+
+        if (savedInstanceState == null) {
             lifecycleScope.launch {
                 accessLogger.logAppOpen()
             }
@@ -36,7 +41,7 @@ class MainActivity : ComponentActivity() {
             PopisAlertaTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     MainNavigation()
                 }
@@ -44,4 +49,24 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        if (hasResumed) {
+            lifecycleScope.launch {
+                accessLogger.logAppResume()
+            }
+        } else {
+            hasResumed = true
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(HAS_RESUMED_STATE_KEY, hasResumed)
+        super.onSaveInstanceState(outState)
+    }
+
+    private companion object {
+        const val HAS_RESUMED_STATE_KEY = "has_resumed"
+    }
 }
