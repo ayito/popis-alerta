@@ -1,0 +1,22 @@
+name: Generar Diagrama del Repositorio
+
+on:
+  push:
+    branches:
+      - main  # Cambia "main" por "master" si tu rama principal se llama así
+
+jobs:
+  visualizar:
+    runs-on: ubuntu-latest
+    steps:
+      # Paso 1: Descargar el código del repositorio en el servidor de GitHub
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      # Paso 2: Ejecutar la herramienta para crear el diagrama gráfico
+      - name: Crear diagrama SVG
+        uses: githubocto/repo-visualizer@main
+        with:
+          output_file: "diagram.svg" # Nombre del archivo que se va a crear
+          excluded_paths: "node_modules,build,.gradle,.idea" # Carpetas de Android que no queremos mapear
+          should_push: true # Le da permiso para hacer commit del SVG en tu repo
