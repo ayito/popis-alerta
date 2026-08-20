@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Popis Alerta</string>
+
+    <string name="event_app_open">Aplicación abierta</string>
+    <string name="event_app_resume">Aplicación reanudada</string>
+    <string name="event_main_screen_open">Pantalla principal abierta</string>
+    <string name="event_test">Evento de prueba</string>
+    <string name="event_unknown">Evento desconocido</string>
 </resources>

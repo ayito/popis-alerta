@@ -20,12 +20,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import java.util.Date
+import org.popisalerta.app.R
 import org.popisalerta.app.data.DefaultAccessRepository
 import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.data.local.AccessEntity
@@ -137,6 +139,15 @@ internal fun MainScreenContent(
 }
 
 @Composable
+private fun accessLabel(triggerSource: String): String = when (triggerSource) {
+    "APP_OPEN" -> stringResource(R.string.event_app_open)
+    "APP_RESUME" -> stringResource(R.string.event_app_resume)
+    "MAIN_SCREEN_OPEN" -> stringResource(R.string.event_main_screen_open)
+    "TEST" -> stringResource(R.string.event_test)
+    else -> stringResource(R.string.event_unknown)
+}
+
+@Composable
 private fun AccessRow(access: AccessEntity) {
     val date =
         DateFormat
@@ -154,7 +165,7 @@ private fun AccessRow(access: AccessEntity) {
     ) {
         Column {
             Text(
-                text = access.triggerSource,
+                text = accessLabel(access.triggerSource),
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
