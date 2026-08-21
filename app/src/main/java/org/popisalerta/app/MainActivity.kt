@@ -16,6 +16,7 @@ import org.popisalerta.app.theme.PopisAlertaTheme
 class MainActivity : ComponentActivity() {
     private lateinit var accessLogger: AppAccessLogger
     private var hasResumed = false
+    private lateinit var roomSensors: RoomSensors
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +35,9 @@ class MainActivity : ComponentActivity() {
         }
 
         enableEdgeToEdge()
+
+        roomSensors = RoomSensors(this)
+
         setContent {
             PopisAlertaTheme {
                 Surface(
@@ -48,6 +52,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        roomSensors.start()
 
         if (hasResumed) {
             lifecycleScope.launch {
@@ -56,6 +61,11 @@ class MainActivity : ComponentActivity() {
         } else {
             hasResumed = true
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        roomSensors.stop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
