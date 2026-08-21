@@ -11,6 +11,8 @@ private const val TAG = "RoomSensors"
 
 class RoomSensors(context: Context) : SensorEventListener {
 
+    private var lastMotion = 0f
+
     private val sensorManager =
         context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
@@ -61,7 +63,18 @@ class RoomSensors(context: Context) : SensorEventListener {
                 val ax = event.values[0]
                 val ay = event.values[1]
                 val az = event.values[2]
-                Log.d(TAG, "Accel: x=$ax, y=$ay, z=$az")
+
+                // magnitud total incluyendo gravedad
+                val magnitude = kotlin.math.sqrt(ax * ax + ay * ay + az * az)
+
+                // quitar gravedad (SensorManager.GRAVITY_EARTH ≈ 9.81 m/s^2)
+                val motionRaw = kotlin.math.abs(magnitude - SensorManager.GRAVITY_EARTH)
+
+                // filtro simple (low-pass): ajusta alpha según lo suave que quieras
+                val alpha = 0.8f
+                lastMotion = alpha * lastMotion + (1 - alpha) * motionRaw
+
+                Log.d(TAG, "Accel: x=$ax, y=$ay, z=$az, motion=${"%.3f".format(lastMotion)} m/s^2")
             }
         }
     }
