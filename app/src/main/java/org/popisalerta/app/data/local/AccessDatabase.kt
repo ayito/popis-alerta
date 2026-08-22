@@ -6,12 +6,21 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [AccessEntity::class],
-    version = 1,
+    entities = [
+        AccessEntity::class,
+        RoomEntryEntity::class,
+        BathroomVisitEntity::class
+    ],
+    version = 3,
     exportSchema = false
 )
 abstract class AccessDatabase : RoomDatabase() {
+
     abstract fun accessDao(): AccessDao
+
+    abstract fun roomEntryDao(): RoomEntryDao
+
+    abstract fun bathroomVisitDao(): BathroomVisitDao
 
     companion object {
         @Volatile
@@ -23,7 +32,10 @@ abstract class AccessDatabase : RoomDatabase() {
                     context.applicationContext,
                     AccessDatabase::class.java,
                     "popis_alerta.db"
-                ).build()
+                )
+                // En desarrollo: si cambia el esquema, borra y recrea la BD
+                .fallbackToDestructiveMigration()
+                .build()
                 .also { instance = it }
         }
     }
