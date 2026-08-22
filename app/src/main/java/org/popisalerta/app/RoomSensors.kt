@@ -12,7 +12,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.data.local.BathroomVisitEntity
-import org.popisalerta.app.data.local.RoomEntryEntity
 
 private const val TAG = "RoomSensors"
 
@@ -49,9 +48,8 @@ class RoomSensors(context: Context) : SensorEventListener {
     private val accelerometer: Sensor? =
         sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
-    // Base de datos y DAOs
+    // Base de datos y DAO para visitas
     private val database = AccessDatabase.getInstance(context.applicationContext)
-    private val roomEntryDao = database.roomEntryDao()
     private val bathroomVisitDao = database.bathroomVisitDao()
 
     // Scope para hacer inserciones en background (Room exige no bloquear el hilo principal)
@@ -105,7 +103,7 @@ class RoomSensors(context: Context) : SensorEventListener {
 
                     if (delta > LIGHT_DELTA_THRESHOLD) {
                         lastLightSpikeAt = System.currentTimeMillis()
-                        recordEntry(source = "light")
+                        recordVisitIfNeeded()
                     }
                 }
 
@@ -125,7 +123,7 @@ class RoomSensors(context: Context) : SensorEventListener {
 
                 if (lastMotion > MOTION_SPIKE_THRESHOLD) {
                     lastMotionSpikeAt = System.currentTimeMillis()
-                    recordEntry(source = "motion")
+                    recordVisitIfNeeded()
                 }
             }
         }
@@ -136,14 +134,10 @@ class RoomSensors(context: Context) : SensorEventListener {
     }
 
     /**
-     * Registra una entrada de habitación cada vez que hay un pico
-     * de movimiento o de luz. Si la otra señal ha ocurrido en los
-     * últimos ENTRY_MAX_AGE_MS, se marca también y subimos confianza.
-     *
-     * Además, agrupa esos picos en una sola "visita al baño" usando
-     * un cooldown entre visitas.
+     * Agrupa picos de movimiento y luz en una sola "visita al baño"
+     * usando un cooldown entre visitas.
      */
-    private fun recordEntry(source: String) {
+    private fun recordVisitIfNeeded() {
         val now = System.currentTimeMillis()
 
         val motionRecent =
@@ -151,48 +145,33 @@ class RoomSensors(context: Context) : SensorEventListener {
         val lightRecent =
             lastLightSpikeAt != null && now - lastLightSpikeAt!! <= ENTRY_MAX_AGE_MS
 
-        // Señales activas para esta entrada
-        val motionFlag = motionRecent || source == "motion"
-        val lightFlag = lightRecent || source == "light"
-
-        // Confianza simple: 1.0 si tenemos ambas señales, 0.7 si solo una
-        val confidence = if (motionFlag && lightFlag) 1.0f else 0.7f
-
-        val entryTimestamp = now
-
-        val entry = RoomEntryEntity(
-            timestamp = entryTimestamp,
-            motionSpike = motionFlag,
-            lightSpike = lightFlag,
-            confidence = confidence,
-        )
+        // Solo creamos visita si hay al menos una señal reciente
+        if (!motionRecent && !lightRecent) {
+            return
+        }
 
         ioScope.launch {
             try {
-                // 1) Guardar el evento de sensores (baja señal)
-                roomEntryDao.insert(entry)
-
-                // 2) Decidir si creamos una nueva visita al baño (alto nivel)
                 val lastVisit = bathroomVisitDao.getLastVisit()
                 val shouldCreateVisit =
                     lastVisit == null ||
-                        (entryTimestamp - lastVisit.startedAt) >= VISIT_COOLDOWN_MS
+                        (now - lastVisit.startedAt) >= VISIT_COOLDOWN_MS
 
                 if (shouldCreateVisit) {
                     val visit = BathroomVisitEntity(
-                        startedAt = entryTimestamp,
+                        startedAt = now,
                         notified = false,
                     )
                     bathroomVisitDao.insert(visit)
                     val visitCount = bathroomVisitDao.getVisitCount()
                     Log.d(
                         TAG,
-                        "Bathroom visit created at $entryTimestamp (total visits: $visitCount)",
+                        "Bathroom visit created at $now (total visits: $visitCount)",
                     )
                 }
                 // si no se crea visita, no logeamos nada para no llenar el logcat
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to insert RoomEntryEntity or BathroomVisitEntity", e)
+                Log.e(TAG, "Failed to insert BathroomVisitEntity", e)
             }
         }
     }
