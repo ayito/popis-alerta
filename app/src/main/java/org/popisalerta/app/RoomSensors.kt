@@ -12,11 +12,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.popisalerta.app.data.AlertSettingsRepository
 import org.popisalerta.app.data.local.AccessDatabase
-import org.popisalerta.app.data.local.BathroomVisitEntity
 
 private const val TAG = "RoomSensors"
 
-class RoomSensors(context: Context) : SensorEventListener {
+class RoomSensors(
+    context: Context,
+    private val clock: Clock = SystemClock(),
+    private val visitRecorder: BathroomVisitRecorder
+) : SensorEventListener {
 
     private var lastMotion = 0f
 
@@ -55,9 +58,6 @@ class RoomSensors(context: Context) : SensorEventListener {
     private val alertSettingsRepository =
         AlertSettingsRepository(applicationContext)
 
-    // Base de datos y DAO para visitas
-    private val database = AccessDatabase.getInstance(applicationContext)
-    private val bathroomVisitDao = database.bathroomVisitDao()
     private val bathroomVisitCooldown = BathroomVisitCooldown(cooldownMs = VISIT_COOLDOWN_MS)
 
     // Scope para hacer inserciones en background (Room exige no bloquear el hilo principal)
@@ -109,7 +109,7 @@ class RoomSensors(context: Context) : SensorEventListener {
                     val delta = kotlin.math.abs(lux - lightBaseline!!)
 
                     if (delta > LIGHT_DELTA_THRESHOLD) {
-                        lastLightSpikeAt = System.currentTimeMillis()
+                        lastLightSpikeAt = clock.currentTimeMillis()
                         recordVisitIfNeeded()
                     }
                 }
@@ -129,7 +129,7 @@ class RoomSensors(context: Context) : SensorEventListener {
                 lastMotion = alpha * lastMotion + (1 - alpha) * motionRaw
 
                 if (lastMotion > MOTION_SPIKE_THRESHOLD) {
-                    lastMotionSpikeAt = System.currentTimeMillis()
+                    lastMotionSpikeAt = clock.currentTimeMillis()
                     recordVisitIfNeeded()
                 }
             }
@@ -151,7 +151,7 @@ class RoomSensors(context: Context) : SensorEventListener {
             return
         }
 
-        val now = System.currentTimeMillis()
+        val now = clock.currentTimeMillis()
 
         val motionRecent =
             lastMotionSpikeAt != null && now - lastMotionSpikeAt!! <= ENTRY_MAX_AGE_MS
@@ -164,26 +164,22 @@ class RoomSensors(context: Context) : SensorEventListener {
 
         ioScope.launch {
             try {
-                val lastVisit = bathroomVisitDao.getLastVisit()
+                val lastVisitStartedAtMs = visitRecorder.getLastVisitStartedAtMs()
                 val shouldCreateVisit = bathroomVisitCooldown.canCreateVisit(
                     nowMs = now,
-                    lastVisitStartedAtMs = lastVisit?.startedAt
+                    lastVisitStartedAtMs = lastVisitStartedAtMs
                 )
 
                 if (shouldCreateVisit) {
-                    val visit = BathroomVisitEntity(
-                        startedAt = now,
-                        notified = false
-                    )
-                    bathroomVisitDao.insert(visit)
-                    val visitCount = bathroomVisitDao.getVisitCount()
+                    visitRecorder.recordVisit(now)
+                    val visitCount = visitRecorder.getVisitCount()
                     Log.d(
                         TAG,
                         "Bathroom visit created at $now (total visits: $visitCount)"
                     )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to insert BathroomVisitEntity", e)
+                Log.e(TAG, "Failed to record bathroom visit", e)
             }
         }
     }

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.popisalerta.app.data.AccessRepositoryProvider
+import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.theme.PopisAlertaTheme
 
 class MainActivity : ComponentActivity() {
@@ -36,7 +37,13 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        roomSensors = RoomSensors(this)
+        val db = AccessDatabase.getInstance(applicationContext)
+        val dao = db.bathroomVisitDao()
+        val visitRecorder = RoomBathroomVisitRecorder(dao)
+        roomSensors = RoomSensors(
+            context = this,
+            visitRecorder = visitRecorder
+        )
 
         setContent {
             PopisAlertaTheme {
