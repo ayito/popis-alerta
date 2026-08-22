@@ -58,6 +58,7 @@ class RoomSensors(context: Context) : SensorEventListener {
     // Base de datos y DAO para visitas
     private val database = AccessDatabase.getInstance(applicationContext)
     private val bathroomVisitDao = database.bathroomVisitDao()
+    private val bathroomVisitCooldown = BathroomVisitCooldown(cooldownMs = VISIT_COOLDOWN_MS)
 
     // Scope para hacer inserciones en background (Room exige no bloquear el hilo principal)
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -76,14 +77,14 @@ class RoomSensors(context: Context) : SensorEventListener {
             sensorManager.registerListener(
                 this,
                 it,
-                SensorManager.SENSOR_DELAY_NORMAL,
+                SensorManager.SENSOR_DELAY_NORMAL
             )
         }
         accelerometer?.let {
             sensorManager.registerListener(
                 this,
                 it,
-                SensorManager.SENSOR_DELAY_NORMAL,
+                SensorManager.SENSOR_DELAY_NORMAL
             )
         }
     }
@@ -104,7 +105,7 @@ class RoomSensors(context: Context) : SensorEventListener {
                 } else {
                     lightBaseline =
                         LIGHT_BASELINE_ALPHA * previousBaseline +
-                            (1 - LIGHT_BASELINE_ALPHA) * lux
+                        (1 - LIGHT_BASELINE_ALPHA) * lux
                     val delta = kotlin.math.abs(lux - lightBaseline!!)
 
                     if (delta > LIGHT_DELTA_THRESHOLD) {
@@ -164,20 +165,21 @@ class RoomSensors(context: Context) : SensorEventListener {
         ioScope.launch {
             try {
                 val lastVisit = bathroomVisitDao.getLastVisit()
-                val shouldCreateVisit =
-                    lastVisit == null ||
-                        (now - lastVisit.startedAt) >= VISIT_COOLDOWN_MS
+                val shouldCreateVisit = bathroomVisitCooldown.canCreateVisit(
+                    nowMs = now,
+                    lastVisitStartedAtMs = lastVisit?.startedAt
+                )
 
                 if (shouldCreateVisit) {
                     val visit = BathroomVisitEntity(
                         startedAt = now,
-                        notified = false,
+                        notified = false
                     )
                     bathroomVisitDao.insert(visit)
                     val visitCount = bathroomVisitDao.getVisitCount()
                     Log.d(
                         TAG,
-                        "Bathroom visit created at $now (total visits: $visitCount)",
+                        "Bathroom visit created at $now (total visits: $visitCount)"
                     )
                 }
             } catch (e: Exception) {
