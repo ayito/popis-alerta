@@ -28,9 +28,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import java.util.Date
 import org.popisalerta.app.R
+import org.popisalerta.app.data.AlertSettingsRepository
 import org.popisalerta.app.data.DefaultAccessRepository
+import org.popisalerta.app.data.DefaultBathroomVisitRepository
 import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.data.local.AccessEntity
+import org.popisalerta.app.data.local.BathroomVisitEntity
 import org.popisalerta.app.theme.PopisAlertaTheme
 
 @Composable
@@ -39,9 +42,16 @@ fun MainScreen(onItemClick: (NavKey) -> Unit, modifier: Modifier = Modifier) {
     val viewModel: MainScreenViewModel =
         viewModel {
             MainScreenViewModel(
-                DefaultAccessRepository(
-                    AccessDatabase.getInstance(context).accessDao()
-                )
+                accessRepository =
+                    DefaultAccessRepository(
+                        AccessDatabase.getInstance(context).accessDao()
+                    ),
+                bathroomVisitRepository =
+                    DefaultBathroomVisitRepository(
+                        AccessDatabase.getInstance(context).bathroomVisitDao()
+                    ),
+                alertSettingsRepository =
+                    AlertSettingsRepository(context.applicationContext)
             )
         }
 
@@ -50,42 +60,9 @@ fun MainScreen(onItemClick: (NavKey) -> Unit, modifier: Modifier = Modifier) {
     }
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val visitsState by viewModel.visitsUiState.collectAsStateWithLifecycle()
+    val alertsEnabled by viewModel.alertsEnabled.collectAsStateWithLifecycle()
 
-    when (state) {
-        MainScreenUiState.Loading -> {
-            Text(
-                text = "Cargando historial…",
-                modifier = modifier
-            )
-        }
-
-        is MainScreenUiState.Success -> {
-            MainScreenContent(
-                accesses = (state as MainScreenUiState.Success).accesses,
-                onRegisterTestAccess = viewModel::registerTestAccess,
-                onDeleteAllAccesses = viewModel::deleteAllAccesses,
-                modifier = modifier
-            )
-        }
-
-        is MainScreenUiState.Error -> {
-            Text(
-                text =
-                    "Error al cargar el historial: " +
-                        (state as MainScreenUiState.Error).throwable.message,
-                modifier = modifier
-            )
-        }
-    }
-}
-
-@Composable
-internal fun MainScreenContent(
-    accesses: List<AccessEntity>,
-    onRegisterTestAccess: () -> Unit,
-    onDeleteAllAccesses: () -> Unit,
-    modifier: Modifier = Modifier
-) {
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -96,43 +73,130 @@ internal fun MainScreenContent(
         )
 
         Text(
-            text = "Eventos registrados: ${accesses.size}",
-            style = MaterialTheme.typography.bodyLarge
+            text = if (alertsEnabled) "Avisos activos" else "Avisos pausados",
+            style = MaterialTheme.typography.titleMedium
         )
 
         Button(
-            onClick = onRegisterTestAccess,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .testTag("RegisterTestAccessButton")
-        ) {
-            Text("Registrar evento de prueba")
-        }
-
-        OutlinedButton(
-            onClick = onDeleteAllAccesses,
-            enabled = accesses.isNotEmpty(),
+            onClick = viewModel::toggleAlerts,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Borrar historial")
+            Text(
+                text =
+                    if (alertsEnabled) {
+                        "Pausar avisos"
+                    } else {
+                        "Reactivar avisos"
+                    }
+            )
         }
 
-        if (accesses.isEmpty()) {
-            Text(
-                text = "Todavía no hay eventos registrados.",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    items = accesses,
-                    key = { access -> access.id }
-                ) { access ->
-                    AccessRow(access)
+        // Sección de accesos (tu UI anterior)
+        when (state) {
+            MainScreenUiState.Loading -> {
+                Text(text = "Cargando historial de accesos…")
+            }
+
+            is MainScreenUiState.Success -> {
+                val accesses = (state as MainScreenUiState.Success).accesses
+                Text(
+                    text = "Eventos de accesos: ${accesses.size}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                Button(
+                    onClick = viewModel::registerTestAccess,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .testTag("RegisterTestAccessButton")
+                ) {
+                    Text("Registrar evento de prueba")
                 }
+
+                OutlinedButton(
+                    onClick = viewModel::deleteAllAccesses,
+                    enabled = accesses.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Borrar historial de accesos")
+                }
+
+                if (accesses.isEmpty()) {
+                    Text(
+                        text = "Todavía no hay eventos de accesos registrados.",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(
+                            items = accesses,
+                            key = { access -> access.id }
+                        ) { access ->
+                            AccessRow(access)
+                        }
+                    }
+                }
+            }
+
+            is MainScreenUiState.Error -> {
+                Text(
+                    text =
+                        "Error al cargar el historial de accesos: " +
+                            (state as MainScreenUiState.Error).throwable.message,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
+        // Sección de visitas al baño
+        Text(
+            text = "Visitas al baño",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        when (visitsState) {
+            VisitsUiState.Loading -> {
+                Text(text = "Cargando visitas…")
+            }
+
+            is VisitsUiState.Success -> {
+                val visits = (visitsState as VisitsUiState.Success).visits
+                Text(
+                    text = "Visitas registradas: ${visits.size}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                if (visits.isEmpty()) {
+                    Text(
+                        text = "Todavía no hay visitas registradas.",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(
+                            items = visits,
+                            key = { visit -> visit.id }
+                        ) { visit ->
+                            BathroomVisitRow(visit)
+                        }
+                    }
+                }
+            }
+
+            is VisitsUiState.Error -> {
+                Text(
+                    text =
+                        "Error al cargar las visitas: " +
+                            (visitsState as VisitsUiState.Error).throwable.message,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
@@ -176,35 +240,86 @@ private fun AccessRow(access: AccessEntity) {
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-private fun MainScreenEmptyPreview() {
-    PopisAlertaTheme {
-        MainScreenContent(
-            accesses = emptyList(),
-            onRegisterTestAccess = {},
-            onDeleteAllAccesses = {},
-            modifier = Modifier.padding(16.dp)
-        )
+private fun BathroomVisitRow(visit: BathroomVisitEntity) {
+    val date =
+        DateFormat
+            .getMediumDateFormat(LocalContext.current)
+            .format(Date(visit.startedAt))
+    val time =
+        DateFormat
+            .getTimeFormat(LocalContext.current)
+            .format(Date(visit.startedAt))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = "Visita al baño",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "$date · $time",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun MainScreenWithEventsPreview() {
+private fun MainScreenEmptyPreview() {
     PopisAlertaTheme {
-        MainScreenContent(
-            accesses =
-                listOf(
-                    AccessEntity(
-                        id = 1,
-                        timestamp = 1_770_000_000_000,
-                        triggerSource = "TEST"
-                    )
-                ),
-            onRegisterTestAccess = {},
-            onDeleteAllAccesses = {},
-            modifier = Modifier.padding(16.dp)
-        )
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Popis Alerta",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Text(
+                text = "Eventos de accesos: 0",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                text = "Visitas al baño",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text(
+                text = "Todavía no hay visitas registradas.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainScreenWithVisitsPreview() {
+    PopisAlertaTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Popis Alerta",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Text(
+                text = "Visitas al baño",
+                style = MaterialTheme.typography.titleLarge
+            )
+            BathroomVisitRow(
+                BathroomVisitEntity(
+                    id = 1,
+                    startedAt = 1_770_000_000_000,
+                    notified = false
+                )
+            )
+        }
     }
 }

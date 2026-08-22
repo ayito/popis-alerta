@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.popisalerta.app.data.AlertSettingsRepository
 import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.data.local.BathroomVisitEntity
 
@@ -38,9 +39,11 @@ class RoomSensors(context: Context) : SensorEventListener {
         const val VISIT_COOLDOWN_MS = 5 * 60 * 1000L
     }
 
+    private val applicationContext = context.applicationContext
+
     // Sensores
     private val sensorManager =
-        context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
     private val lightSensor: Sensor? =
         sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
@@ -48,8 +51,12 @@ class RoomSensors(context: Context) : SensorEventListener {
     private val accelerometer: Sensor? =
         sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
+    // Preferencia persistente de avisos activos/pausados
+    private val alertSettingsRepository =
+        AlertSettingsRepository(applicationContext)
+
     // Base de datos y DAO para visitas
-    private val database = AccessDatabase.getInstance(context.applicationContext)
+    private val database = AccessDatabase.getInstance(applicationContext)
     private val bathroomVisitDao = database.bathroomVisitDao()
 
     // Scope para hacer inserciones en background (Room exige no bloquear el hilo principal)
@@ -83,7 +90,6 @@ class RoomSensors(context: Context) : SensorEventListener {
 
     fun stop() {
         sensorManager.unregisterListener(this)
-        // de momento no cancelamos ioScope para poder reiniciar sin recrear RoomSensors
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -136,8 +142,14 @@ class RoomSensors(context: Context) : SensorEventListener {
     /**
      * Agrupa picos de movimiento y luz en una sola "visita al baño"
      * usando un cooldown entre visitas.
+     *
+     * Si los avisos están pausados, no crea visitas nuevas.
      */
     private fun recordVisitIfNeeded() {
+        if (!alertSettingsRepository.areAlertsEnabled()) {
+            return
+        }
+
         val now = System.currentTimeMillis()
 
         val motionRecent =
@@ -145,7 +157,6 @@ class RoomSensors(context: Context) : SensorEventListener {
         val lightRecent =
             lastLightSpikeAt != null && now - lastLightSpikeAt!! <= ENTRY_MAX_AGE_MS
 
-        // Solo creamos visita si hay al menos una señal reciente
         if (!motionRecent && !lightRecent) {
             return
         }
@@ -169,7 +180,6 @@ class RoomSensors(context: Context) : SensorEventListener {
                         "Bathroom visit created at $now (total visits: $visitCount)",
                     )
                 }
-                // si no se crea visita, no logeamos nada para no llenar el logcat
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to insert BathroomVisitEntity", e)
             }
