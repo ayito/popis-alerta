@@ -34,7 +34,7 @@ class BathroomVisitDaoTest {
     fun insertarVisita_y_recuperar_ultimaVisita() = runTest {
         val visit = BathroomVisitEntity(
             startedAt = 1_000L,
-            notified = false,
+            notified = false
         )
         dao.insert(visit)
 
@@ -74,5 +74,16 @@ class BathroomVisitDaoTest {
 
         assertNotNull(lastVisit)
         assertEquals(3_000L, lastVisit!!.startedAt)
+    }
+
+    @Test
+    fun eliminarTodasLasVisitas_dejaElHistorialVacio() = runTest {
+        dao.insert(BathroomVisitEntity(startedAt = 1_000L, notified = false))
+        dao.insert(BathroomVisitEntity(startedAt = 2_000L, notified = false))
+
+        dao.deleteAll()
+
+        assertEquals(0L, dao.getVisitCount())
+        assertNull(dao.getLastVisit())
     }
 }

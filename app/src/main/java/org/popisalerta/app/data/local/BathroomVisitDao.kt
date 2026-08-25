@@ -31,4 +31,7 @@ interface BathroomVisitDao {
 
     @Query("SELECT COUNT(*) FROM bathroom_visits")
     suspend fun getVisitCount(): Long
+
+    @Query("DELETE FROM bathroom_visits")
+    suspend fun deleteAll()
 }

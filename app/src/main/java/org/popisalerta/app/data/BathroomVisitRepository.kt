@@ -23,7 +23,6 @@ class DefaultBathroomVisitRepository(
         bathroomVisitDao.getVisitCount()
 
     override suspend fun deleteAllVisits() {
-        // Por ahora no hay DAO para borrar, lo dejamos como no-op
-        // Más adelante se puede añadir un @Query("DELETE FROM bathroom_visits")
+        bathroomVisitDao.deleteAll()
     }
 }
