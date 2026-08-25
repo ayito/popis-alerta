@@ -6,13 +6,13 @@ set -e  # Salir si algún comando falla
 AVD_NAME="popis_test"
 
 echo "🔍 Verificando que el AVD '$AVD_NAME' existe..."
-if ! adb emu avd name 2>/dev/null | grep -q .; then
-    # Listar AVDs disponibles
+if ! emulator -list-avds | grep -q "^${AVD_NAME}$"; then
     echo "AVDs disponibles:"
     emulator -list-avds
     echo ""
-    echo "❌ Error: No se pudo verificar el AVD. Asegúrate de que '$AVD_NAME' existe."
-    echo "   Para crearlo: avdmanager create avd -n $AVD_NAME -k 'system-images;android-34;google_apis;x86_64'"
+    echo "❌ Error: El AVD '$AVD_NAME' no existe."
+    echo "   Para crearlo:"
+    echo "   avdmanager create avd -n $AVD_NAME -k 'system-images;android-34;google_apis;x86_64'"
     exit 1
 fi
 

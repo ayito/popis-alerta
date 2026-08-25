@@ -10,14 +10,13 @@ class RoomBathroomVisitRecorder(
     private val dao: BathroomVisitDao,
 ) : BathroomVisitRecorder {
 
-    override suspend fun recordVisit(startedAtMs: Long): Long {
-        val visit = BathroomVisitEntity(
-            startedAt = startedAtMs,
-            notified = false,
+    override suspend fun recordVisit(startedAtMs: Long): Long =
+        dao.insert(
+            BathroomVisitEntity(
+                startedAt = startedAtMs,
+                notified = false,
+            ),
         )
-        dao.insert(visit)
-        return startedAtMs
-    }
 
     override suspend fun getLastVisitStartedAtMs(): Long? =
         dao.getLastVisit()?.startedAt

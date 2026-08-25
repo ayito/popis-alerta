@@ -1,24 +1,31 @@
 package org.popisalerta.app
 
 /**
- * Implementación fake de [BathroomVisitRecorder] para tests.
+ * Implementación de prueba de [BathroomVisitRecorder] que no usa base de datos.
  *
- * Almacena las visitas en memoria y permite consultarlas de forma determinista.
+ * Genera IDs deterministas (1, 2, 3...) para facilitar la verificación en tests.
  */
 class FakeBathroomVisitRecorder : BathroomVisitRecorder {
 
-    data class Visit(val startedAtMs: Long)
+    private var nextId = 1L
+    private var lastVisitStartedAtMs: Long? = null
+    private val visits = mutableListOf<Visit>()
 
-    private val _visits = mutableListOf<Visit>()
-
-    val visits: List<Visit> get() = _visits.toList()
+    data class Visit(
+        val id: Long,
+        val startedAtMs: Long,
+    )
 
     override suspend fun recordVisit(startedAtMs: Long): Long {
-        _visits.add(Visit(startedAtMs = startedAtMs))
-        return startedAtMs
+        val id = nextId++
+        lastVisitStartedAtMs = startedAtMs
+        visits += Visit(id, startedAtMs)
+        return id
     }
 
-    override suspend fun getLastVisitStartedAtMs(): Long? = _visits.lastOrNull()?.startedAtMs
+    override suspend fun getLastVisitStartedAtMs(): Long? = lastVisitStartedAtMs
 
-    override suspend fun getVisitCount(): Int = _visits.size
+    override suspend fun getVisitCount(): Int = visits.size
+
+    fun allVisits(): List<Visit> = visits.toList()
 }
