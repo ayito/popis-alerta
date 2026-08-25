@@ -2,9 +2,7 @@ package org.popisalerta.app
 
 import org.popisalerta.app.data.AccessRepository
 
-class AppAccessLogger(
-    private val accessRepository: AccessRepository,
-) {
+class AppAccessLogger(private val accessRepository: AccessRepository) {
     suspend fun logAppOpen() {
         accessRepository.logAccess(APP_OPEN_TRIGGER_SOURCE)
     }

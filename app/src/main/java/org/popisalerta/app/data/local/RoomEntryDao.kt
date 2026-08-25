@@ -27,10 +27,7 @@ interface RoomEntryDao {
         ORDER BY timestamp ASC
         """
     )
-    fun getEntriesBetween(
-        from: Long,
-        to: Long,
-    ): Flow<List<RoomEntryEntity>>
+    fun getEntriesBetween(from: Long, to: Long): Flow<List<RoomEntryEntity>>
 
     @Query("SELECT COUNT(*) FROM room_entries")
     suspend fun getEntryCount(): Long

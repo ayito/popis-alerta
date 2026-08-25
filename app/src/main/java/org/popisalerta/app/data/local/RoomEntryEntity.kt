@@ -22,5 +22,5 @@ data class RoomEntryEntity(
     val lightSpike: Boolean,
 
     // Nivel de confianza (0.0–1.0), por ahora siempre 1.0
-    val confidence: Float = 1.0f,
+    val confidence: Float = 1.0f
 )

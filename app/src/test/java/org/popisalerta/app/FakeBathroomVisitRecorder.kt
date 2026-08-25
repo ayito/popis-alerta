@@ -11,10 +11,7 @@ class FakeBathroomVisitRecorder : BathroomVisitRecorder {
     private var lastVisitStartedAtMs: Long? = null
     private val visits = mutableListOf<Visit>()
 
-    data class Visit(
-        val id: Long,
-        val startedAtMs: Long,
-    )
+    data class Visit(val id: Long, val startedAtMs: Long)
 
     override suspend fun recordVisit(startedAtMs: Long): Long {
         val id = nextId++

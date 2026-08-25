@@ -13,7 +13,7 @@ import org.popisalerta.app.data.local.BathroomVisitEntity
 
 class MainScreenViewModel(
     private val bathroomVisitRepository: BathroomVisitRepository,
-    private val alertSettingsRepository: AlertSettingsRepository,
+    private val alertSettingsRepository: AlertSettingsRepository
 ) : ViewModel() {
 
     val alertsEnabled: StateFlow<Boolean> =
@@ -22,7 +22,7 @@ class MainScreenViewModel(
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = alertSettingsRepository.areAlertsEnabled(),
+                initialValue = alertSettingsRepository.areAlertsEnabled()
             )
 
     val visitsUiState: StateFlow<VisitsUiState> =
@@ -33,12 +33,12 @@ class MainScreenViewModel(
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = VisitsUiState.Loading,
+                initialValue = VisitsUiState.Loading
             )
 
     fun toggleAlerts() {
         alertSettingsRepository.setAlertsEnabled(
-            enabled = !alertSettingsRepository.areAlertsEnabled(),
+            enabled = !alertSettingsRepository.areAlertsEnabled()
         )
     }
 }

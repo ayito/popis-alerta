@@ -14,7 +14,7 @@ class BathroomVisitCooldownTest {
         val canCreateVisit =
             subject.canCreateVisit(
                 nowMs = 1_000L,
-                lastVisitStartedAtMs = null,
+                lastVisitStartedAtMs = null
             )
 
         assertTrue(canCreateVisit)
@@ -28,7 +28,7 @@ class BathroomVisitCooldownTest {
         val canCreateVisit =
             subject.canCreateVisit(
                 nowMs = nowMs,
-                lastVisitStartedAtMs = lastVisitStartedAtMs,
+                lastVisitStartedAtMs = lastVisitStartedAtMs
             )
 
         assertFalse(canCreateVisit)
@@ -42,7 +42,7 @@ class BathroomVisitCooldownTest {
         val canCreateVisit =
             subject.canCreateVisit(
                 nowMs = nowMs,
-                lastVisitStartedAtMs = lastVisitStartedAtMs,
+                lastVisitStartedAtMs = lastVisitStartedAtMs
             )
 
         assertTrue(canCreateVisit)
@@ -56,7 +56,7 @@ class BathroomVisitCooldownTest {
         val canCreateVisit =
             subject.canCreateVisit(
                 nowMs = nowMs,
-                lastVisitStartedAtMs = lastVisitStartedAtMs,
+                lastVisitStartedAtMs = lastVisitStartedAtMs
             )
 
         assertTrue(canCreateVisit)

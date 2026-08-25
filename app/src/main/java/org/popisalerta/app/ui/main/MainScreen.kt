@@ -30,20 +30,17 @@ import org.popisalerta.app.data.local.BathroomVisitEntity
 import org.popisalerta.app.theme.PopisAlertaTheme
 
 @Composable
-fun MainScreen(
-    onItemClick: (NavKey) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun MainScreen(onItemClick: (NavKey) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val viewModel: MainScreenViewModel =
         viewModel {
             MainScreenViewModel(
                 bathroomVisitRepository =
                     DefaultBathroomVisitRepository(
-                        AccessDatabase.getInstance(context).bathroomVisitDao(),
+                        AccessDatabase.getInstance(context).bathroomVisitDao()
                     ),
                 alertSettingsRepository =
-                    AlertSettingsRepository(context.applicationContext),
+                    AlertSettingsRepository(context.applicationContext)
             )
         }
 
@@ -52,21 +49,21 @@ fun MainScreen(
 
     Column(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
             text = "Popis Alerta",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium
         )
 
         Text(
             text = if (alertsEnabled) "Avisos activos" else "Avisos pausados",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium
         )
 
         Button(
             onClick = viewModel::toggleAlerts,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text =
@@ -74,13 +71,13 @@ fun MainScreen(
                         "Pausar avisos"
                     } else {
                         "Reactivar avisos"
-                    },
+                    }
             )
         }
 
         Text(
             text = "Visitas al baño",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLarge
         )
 
         when (visitsState) {
@@ -93,22 +90,22 @@ fun MainScreen(
 
                 Text(
                     text = "Visitas registradas: ${visits.size}",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge
                 )
 
                 if (visits.isEmpty()) {
                     Text(
                         text = "Todavía no hay visitas registradas.",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f)
                     ) {
                         items(
                             items = visits,
-                            key = { visit -> visit.id },
+                            key = { visit -> visit.id }
                         ) { visit ->
                             BathroomVisitRow(visit)
                         }
@@ -121,7 +118,7 @@ fun MainScreen(
                     text =
                         "Error al cargar las visitas: " +
                             (visitsState as VisitsUiState.Error).throwable.message,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -142,16 +139,16 @@ private fun BathroomVisitRow(visit: BathroomVisitEntity) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
             Text(
                 text = "Visita al baño",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium
             )
             Text(
                 text = "$date · $time",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -163,23 +160,23 @@ private fun MainScreenEmptyPreview() {
     PopisAlertaTheme {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = "Popis Alerta",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium
             )
             Text(
                 text = "Avisos activos",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium
             )
             Text(
                 text = "Visitas al baño",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge
             )
             Text(
                 text = "Todavía no hay visitas registradas.",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge
             )
         }
     }
@@ -191,22 +188,22 @@ private fun MainScreenWithVisitsPreview() {
     PopisAlertaTheme {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = "Popis Alerta",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium
             )
             Text(
                 text = "Visitas al baño",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge
             )
             BathroomVisitRow(
                 BathroomVisitEntity(
                     id = 1,
                     startedAt = 1_770_000_000_000,
-                    notified = false,
-                ),
+                    notified = false
+                )
             )
         }
     }

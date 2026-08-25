@@ -1,13 +1,8 @@
 package org.popisalerta.app
 
-class BathroomVisitCooldown(
-    private val cooldownMs: Long,
-) {
+class BathroomVisitCooldown(private val cooldownMs: Long) {
 
-    fun canCreateVisit(
-        nowMs: Long,
-        lastVisitStartedAtMs: Long?,
-    ): Boolean {
+    fun canCreateVisit(nowMs: Long, lastVisitStartedAtMs: Long?): Boolean {
         if (lastVisitStartedAtMs == null) {
             return true
         }

@@ -16,9 +16,7 @@ interface AccessRepository {
     suspend fun deleteAll()
 }
 
-class DefaultAccessRepository(
-    private val accessDao: AccessDao,
-) : AccessRepository {
+class DefaultAccessRepository(private val accessDao: AccessDao) : AccessRepository {
 
     override fun observeAll(): Flow<List<AccessEntity>> = accessDao.observeAll()
 
@@ -28,8 +26,8 @@ class DefaultAccessRepository(
     override suspend fun logAccess(triggerSource: String): Long = accessDao.insert(
         AccessEntity(
             timestamp = System.currentTimeMillis(),
-            triggerSource = triggerSource,
-        ),
+            triggerSource = triggerSource
+        )
     )
 
     override suspend fun logTestAccess(): Long = logAccess(TEST_TRIGGER_SOURCE)

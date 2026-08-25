@@ -11,12 +11,12 @@ class AlertSettingsRepository(context: Context) {
     private val preferences: SharedPreferences =
         context.applicationContext.getSharedPreferences(
             PREFERENCES_NAME,
-            Context.MODE_PRIVATE,
+            Context.MODE_PRIVATE
         )
 
     private val _alertsEnabled =
         MutableStateFlow(
-            preferences.getBoolean(ALERTS_ENABLED_KEY, DEFAULT_ALERTS_ENABLED),
+            preferences.getBoolean(ALERTS_ENABLED_KEY, DEFAULT_ALERTS_ENABLED)
         )
 
     val alertsEnabled: Flow<Boolean> = _alertsEnabled.asStateFlow()

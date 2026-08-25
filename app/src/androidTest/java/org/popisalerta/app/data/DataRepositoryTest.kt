@@ -21,7 +21,7 @@ class DataRepositoryTest {
             Room
                 .inMemoryDatabaseBuilder(
                     ApplicationProvider.getApplicationContext(),
-                    AccessDatabase::class.java,
+                    AccessDatabase::class.java
                 ).build()
 
         repository = DefaultAccessRepository(database.accessDao())

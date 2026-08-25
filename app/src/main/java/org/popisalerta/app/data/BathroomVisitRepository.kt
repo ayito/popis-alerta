@@ -12,15 +12,13 @@ interface BathroomVisitRepository {
     suspend fun deleteAllVisits()
 }
 
-class DefaultBathroomVisitRepository(
-    private val bathroomVisitDao: BathroomVisitDao,
-) : BathroomVisitRepository {
+class DefaultBathroomVisitRepository(private val bathroomVisitDao: BathroomVisitDao) :
+    BathroomVisitRepository {
 
     override fun observeAllVisits(): Flow<List<BathroomVisitEntity>> =
         bathroomVisitDao.getAllVisits()
 
-    override suspend fun getVisitCount(): Long =
-        bathroomVisitDao.getVisitCount()
+    override suspend fun getVisitCount(): Long = bathroomVisitDao.getVisitCount()
 
     override suspend fun deleteAllVisits() {
         bathroomVisitDao.deleteAll()

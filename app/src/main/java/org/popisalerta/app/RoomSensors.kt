@@ -25,7 +25,7 @@ class RoomSensors(
     private val roomEntryDao: RoomEntryDao,
     private val visitRecorder: BathroomVisitRecorder,
     private val clock: Clock = SystemClock(),
-    private val entryMaxAgeMs: Long = 15_000L,
+    private val entryMaxAgeMs: Long = 15_000L
 ) : Sensors {
 
     private val sensorManager: SensorManager by lazy {
@@ -48,7 +48,7 @@ class RoomSensors(
         clock = clock,
         cooldown = cooldown,
         visitRecorder = visitRecorder,
-        entryMaxAgeMs = entryMaxAgeMs,
+        entryMaxAgeMs = entryMaxAgeMs
     )
 
     private val lightListener = object : SensorEventListener {
@@ -102,7 +102,7 @@ class RoomSensors(
             sensorManager.registerListener(
                 lightListener,
                 it,
-                SensorManager.SENSOR_DELAY_NORMAL,
+                SensorManager.SENSOR_DELAY_NORMAL
             )
         }
 
@@ -110,7 +110,7 @@ class RoomSensors(
             sensorManager.registerListener(
                 motionListener,
                 it,
-                SensorManager.SENSOR_DELAY_NORMAL,
+                SensorManager.SENSOR_DELAY_NORMAL
             )
         }
     }
@@ -125,8 +125,8 @@ class RoomSensors(
             RoomEntryEntity(
                 timestamp = nowMs,
                 motionSpike = false,
-                lightSpike = true,
-            ),
+                lightSpike = true
+            )
         )
     }
 
@@ -135,8 +135,8 @@ class RoomSensors(
             RoomEntryEntity(
                 timestamp = nowMs,
                 motionSpike = true,
-                lightSpike = false,
-            ),
+                lightSpike = false
+            )
         )
     }
 }

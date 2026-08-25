@@ -14,7 +14,7 @@ import androidx.room.PrimaryKey
     tableName = "bathroom_visits",
     indices = [
         Index(value = ["startedAt"])
-    ],
+    ]
 )
 data class BathroomVisitEntity(
     @PrimaryKey(autoGenerate = true)
@@ -24,5 +24,5 @@ data class BathroomVisitEntity(
     val startedAt: Long,
 
     // Indica si ya se lanzó la llamada telefónica asociada a esta visita
-    val notified: Boolean = false,
+    val notified: Boolean = false
 )

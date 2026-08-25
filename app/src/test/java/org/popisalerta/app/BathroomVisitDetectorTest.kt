@@ -16,7 +16,7 @@ class BathroomVisitDetectorTest {
             clock = clock,
             cooldown = cooldown,
             visitRecorder = recorder,
-            entryMaxAgeMs = 15_000L,
+            entryMaxAgeMs = 15_000L
         )
 
         // No se llama a ningún spike: no debería haber visita
@@ -32,7 +32,7 @@ class BathroomVisitDetectorTest {
             clock = clock,
             cooldown = cooldown,
             visitRecorder = recorder,
-            entryMaxAgeMs = 15_000L,
+            entryMaxAgeMs = 15_000L
         )
 
         val visitId = detector.onLightSpike()
@@ -51,7 +51,7 @@ class BathroomVisitDetectorTest {
             clock = clock,
             cooldown = cooldown,
             visitRecorder = recorder,
-            entryMaxAgeMs = 15_000L,
+            entryMaxAgeMs = 15_000L
         )
 
         val visitId = detector.onMotionSpike()
@@ -69,7 +69,7 @@ class BathroomVisitDetectorTest {
             clock = clock,
             cooldown = cooldown,
             visitRecorder = recorder,
-            entryMaxAgeMs = 15_000L,
+            entryMaxAgeMs = 15_000L
         )
 
         detector.onLightSpike()
@@ -88,7 +88,7 @@ class BathroomVisitDetectorTest {
             clock = clock,
             cooldown = cooldown,
             visitRecorder = recorder,
-            entryMaxAgeMs = 15_000L,
+            entryMaxAgeMs = 15_000L
         )
 
         detector.onLightSpike()
@@ -110,7 +110,7 @@ class BathroomVisitDetectorTest {
             clock = clock,
             cooldown = cooldown,
             visitRecorder = recorder,
-            entryMaxAgeMs = 15_000L,
+            entryMaxAgeMs = 15_000L
         )
 
         detector.onLightSpike()

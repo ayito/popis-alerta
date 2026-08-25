@@ -10,7 +10,7 @@ class BathroomVisitDetector(
     private val clock: Clock,
     private val cooldown: BathroomVisitCooldown,
     private val visitRecorder: BathroomVisitRecorder,
-    private val entryMaxAgeMs: Long,
+    private val entryMaxAgeMs: Long
 ) {
     private var lastMotionSpikeAtMs: Long? = null
     private var lastLightSpikeAtMs: Long? = null
