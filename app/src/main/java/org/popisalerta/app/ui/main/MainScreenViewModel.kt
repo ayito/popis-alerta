@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.popisalerta.app.data.AlertSettingsRepository
 import org.popisalerta.app.data.BathroomVisitRepository
 import org.popisalerta.app.data.local.BathroomVisitEntity
@@ -40,6 +41,12 @@ class MainScreenViewModel(
         alertSettingsRepository.setAlertsEnabled(
             enabled = !alertSettingsRepository.areAlertsEnabled()
         )
+    }
+
+    fun clearVisits() {
+        viewModelScope.launch {
+            bathroomVisitRepository.deleteAllVisits()
+        }
     }
 }
 

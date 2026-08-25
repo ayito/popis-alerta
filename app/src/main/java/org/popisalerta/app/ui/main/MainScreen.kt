@@ -10,10 +10,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -46,6 +50,7 @@ fun MainScreen(onItemClick: (NavKey) -> Unit, modifier: Modifier = Modifier) {
 
     val visitsState by viewModel.visitsUiState.collectAsStateWithLifecycle()
     val alertsEnabled by viewModel.alertsEnabled.collectAsStateWithLifecycle()
+    var showClearVisitsDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier.fillMaxSize(),
@@ -99,6 +104,13 @@ fun MainScreen(onItemClick: (NavKey) -> Unit, modifier: Modifier = Modifier) {
                         style = MaterialTheme.typography.bodyLarge
                     )
                 } else {
+                    Button(
+                        onClick = { showClearVisitsDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(text = "Borrar historial")
+                    }
+
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.weight(1f)
@@ -122,6 +134,38 @@ fun MainScreen(onItemClick: (NavKey) -> Unit, modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
+    if (showClearVisitsDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearVisitsDialog = false },
+            title = {
+                Text(text = "¿Borrar historial?")
+            },
+            text = {
+                Text(
+                    text =
+                        "Se eliminarán todas las visitas registradas. " +
+                            "Esta acción no se puede deshacer.",
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.clearVisits()
+                        showClearVisitsDialog = false
+                    },
+                ) {
+                    Text(text = "Borrar")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showClearVisitsDialog = false },
+                ) {
+                    Text(text = "Cancelar")
+                }
+            },
+        )
     }
 }
 
