@@ -5,8 +5,9 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.popisalerta.app.SensorThresholds
 
-class SensorSettingsRepository(context: Context) {
+class SensorSettingsRepository(context: Context) : SensorThresholds {
 
     private val preferences: SharedPreferences =
             context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
@@ -20,9 +21,9 @@ class SensorSettingsRepository(context: Context) {
     val lightThreshold: Flow<Float> = _lightThreshold.asStateFlow()
     val motionThreshold: Flow<Float> = _motionThreshold.asStateFlow()
 
-    fun currentLightThreshold(): Float = _lightThreshold.value
+    override fun currentLightThreshold(): Float = _lightThreshold.value
 
-    fun currentMotionThreshold(): Float = _motionThreshold.value
+    override fun currentMotionThreshold(): Float = _motionThreshold.value
 
     fun setLightThreshold(threshold: Float) {
         preferences.edit().putFloat(LIGHT_THRESHOLD_KEY, threshold).apply()

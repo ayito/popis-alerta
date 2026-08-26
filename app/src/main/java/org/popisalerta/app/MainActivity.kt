@@ -26,12 +26,17 @@ class MainActivity : ComponentActivity() {
 
         Log.d("PopisAlerta", "MainActivity.onCreate() started")
 
-        accessLogger = AppAccessLogger(AccessRepositoryProvider.create(applicationContext))
+        accessLogger =
+            AppAccessLogger(
+                AccessRepositoryProvider.create(applicationContext)
+            )
 
         hasResumed = savedInstanceState?.getBoolean(HAS_RESUMED_STATE_KEY) ?: false
 
         if (savedInstanceState == null) {
-            lifecycleScope.launch { accessLogger.logAppOpen() }
+            lifecycleScope.launch {
+                accessLogger.logAppOpen()
+            }
         }
 
         enableEdgeToEdge()
@@ -46,24 +51,25 @@ class MainActivity : ComponentActivity() {
         val visitRecorder = RoomBathroomVisitRecorder(dao)
         Log.d("PopisAlerta", "RoomBathroomVisitRecorder created: $visitRecorder")
 
-        val sensorThresholds = SensorSettingsRepository(applicationContext)
+                val sensorThresholds = SensorSettingsRepository(applicationContext)
 
-        roomSensors =
-                RoomSensors(
-                        context = this,
-                        accessDao = db.accessDao(),
-                        roomEntryDao = db.roomEntryDao(),
-                        visitRecorder = visitRecorder,
-                        sensorThresholds = sensorThresholds
-                )
+        roomSensors = RoomSensors(
+            context = this,
+            accessDao = db.accessDao(),
+            roomEntryDao = db.roomEntryDao(),
+            visitRecorder = visitRecorder,
+            sensorThresholds = sensorThresholds,
+        )
         Log.d("PopisAlerta", "RoomSensors created: $roomSensors")
 
         setContent {
             PopisAlertaTheme {
                 Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                ) { MainNavigation() }
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainNavigation()
+                }
             }
         }
         Log.d("PopisAlerta", "Content set")
@@ -75,7 +81,9 @@ class MainActivity : ComponentActivity() {
         roomSensors.start()
 
         if (hasResumed) {
-            lifecycleScope.launch { accessLogger.logAppResume() }
+            lifecycleScope.launch {
+                accessLogger.logAppResume()
+            }
         } else {
             hasResumed = true
         }

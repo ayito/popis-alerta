@@ -24,6 +24,7 @@ class RoomSensors(
     private val accessDao: AccessDao,
     private val roomEntryDao: RoomEntryDao,
     private val visitRecorder: BathroomVisitRecorder,
+    private val sensorThresholds: SensorThresholds,
     private val clock: Clock = SystemClock(),
     private val entryMaxAgeMs: Long = 15_000L
 ) : Sensors {
@@ -55,7 +56,7 @@ class RoomSensors(
         override fun onSensorChanged(event: SensorEvent) {
             val nowMs = clock.currentTimeMillis()
             val lux = event.values[0]
-            if (lux >= 100f) {
+            if (lux >= sensorThresholds.currentLightThreshold()) {
                 coroutineScope.launch {
                     recordLightSpike(nowMs)
                     detector.onLightSpike()
@@ -86,7 +87,7 @@ class RoomSensors(
             lastY = y
             lastZ = z
 
-            if (delta > 2f) {
+            if (delta > sensorThresholds.currentMotionThreshold()) {
                 coroutineScope.launch {
                     recordMotionSpike(nowMs)
                     detector.onMotionSpike()

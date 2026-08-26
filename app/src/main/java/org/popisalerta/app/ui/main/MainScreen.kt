@@ -27,11 +27,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import java.util.Date
+import org.popisalerta.app.Calibration
+import org.popisalerta.app.Settings
 import org.popisalerta.app.data.AlertSettingsRepository
 import org.popisalerta.app.data.DefaultBathroomVisitRepository
 import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.data.local.BathroomVisitEntity
-import org.popisalerta.app.Settings
 import org.popisalerta.app.theme.PopisAlertaTheme
 
 @Composable
@@ -72,6 +73,10 @@ fun MainScreen(onItemClick: (NavKey) -> Unit, modifier: Modifier = Modifier) {
 
         Button(onClick = { onItemClick(Settings) }, modifier = Modifier.fillMaxWidth()) {
             Text(text = "Configuración")
+        }
+
+        Button(onClick = { onItemClick(Calibration) }, modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Calibrar sensores")
         }
 
         Text(text = "Visitas al baño", style = MaterialTheme.typography.titleLarge)
