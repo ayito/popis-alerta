@@ -27,7 +27,10 @@ fun MainNavigation() {
                             )
                         }
                         entry<Settings> {
-                            SettingsScreen(modifier = Modifier.safeDrawingPadding().padding(16.dp))
+                            SettingsScreen(
+                                    onBack = { backStack.removeLastOrNull() },
+                                    modifier = Modifier.safeDrawingPadding().padding(16.dp)
+                            )
                         }
                     }
     )
