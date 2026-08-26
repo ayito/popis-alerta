@@ -9,21 +9,26 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import org.popisalerta.app.ui.main.MainScreen
+import org.popisalerta.app.ui.settings.SettingsScreen
 
 @Composable
 fun MainNavigation() {
     val backStack = rememberNavBackStack(Main)
 
     NavDisplay(
-        backStack = backStack,
-        onBack = { backStack.removeLastOrNull() },
-        entryProvider =
-            entryProvider {
-                entry<Main> {
-                    MainScreen(onItemClick = { navKey ->
-                        backStack.add(navKey)
-                    }, modifier = Modifier.safeDrawingPadding().padding(16.dp))
-                }
-            }
+            backStack = backStack,
+            onBack = { backStack.removeLastOrNull() },
+            entryProvider =
+                    entryProvider {
+                        entry<Main> {
+                            MainScreen(
+                                    onItemClick = { navKey -> backStack.add(navKey) },
+                                    modifier = Modifier.safeDrawingPadding().padding(16.dp)
+                            )
+                        }
+                        entry<Settings> {
+                            SettingsScreen(modifier = Modifier.safeDrawingPadding().padding(16.dp))
+                        }
+                    }
     )
 }
