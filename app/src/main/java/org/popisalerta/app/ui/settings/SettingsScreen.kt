@@ -6,20 +6,19 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,11 +26,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlin.math.abs
 import kotlin.math.sqrt
 import org.popisalerta.app.data.SensorSettingsRepository
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val viewModel: SettingsViewModel = viewModel {
         SettingsViewModel(
@@ -53,14 +53,15 @@ fun SettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var motionThresholdText by
             remember(savedMotionThreshold) { mutableStateOf(savedMotionThreshold.toString()) }
     var validationError by remember { mutableStateOf<String?>(null) }
-    var changesSaved by remember { mutableStateOf(false) }
+    var hasUnsavedChanges by remember { mutableStateOf(false) }
 
-    // Lecturas en tiempo real
     var luxCurrent by remember { mutableFloatStateOf(0f) }
-    var luxStatus by remember { mutableStateOf("—") }
+    var hasLightReading by remember { mutableStateOf(false) }
     var accelCurrent by remember { mutableFloatStateOf(0f) }
-    var accelStatus by remember { mutableStateOf("—") }
-    var isTestMode by remember { mutableStateOf(false) }
+    var hasMotionReading by remember { mutableStateOf(false) }
+
+    val currentLightThreshold by rememberUpdatedState(savedLightThreshold)
+    val currentMotionThreshold by rememberUpdatedState(savedMotionThreshold)
 
     val sensorManager = remember {
         context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -73,166 +74,217 @@ fun SettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             override fun onSensorChanged(event: SensorEvent) {
                 when (event.sensor.type) {
                     Sensor.TYPE_LIGHT -> {
-                        val lux = event.values[0]
-                        luxCurrent = lux
-                        val threshold = savedLightThreshold
-                        luxStatus =
-                                if (lux > threshold) {
-                                    "por encima del umbral ($threshold)"
-                                } else {
-                                    "por debajo del umbral ($threshold)"
-                                }
+                        luxCurrent = event.values[0]
+                        hasLightReading = true
                     }
                     Sensor.TYPE_ACCELEROMETER -> {
                         val ax = event.values[0]
                         val ay = event.values[1]
                         val az = event.values[2]
                         val magnitude = sqrt(ax * ax + ay * ay + az * az)
-                        val gravity = 9.81f
-                        val dynamicAccel = kotlin.math.abs(magnitude - gravity)
-                        accelCurrent = dynamicAccel
-                        val threshold = savedMotionThreshold
-                        accelStatus =
-                                if (dynamicAccel > threshold) {
-                                    "en movimiento (umbral: $threshold)"
-                                } else {
-                                    "en reposo (umbral: $threshold)"
-                                }
+
+                        accelCurrent = abs(magnitude - GRAVITY)
+                        hasMotionReading = true
                     }
                 }
             }
 
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
         }
     }
 
-    LaunchedEffect(isTestMode, savedLightThreshold, savedMotionThreshold) {
-        if (isTestMode) {
-            lightSensor?.let {
-                sensorManager.registerListener(
-                        sensorListener,
-                        it,
-                        SensorManager.SENSOR_DELAY_NORMAL
-                )
-            }
-            accelerometerSensor?.let {
-                sensorManager.registerListener(
-                        sensorListener,
-                        it,
-                        SensorManager.SENSOR_DELAY_NORMAL
-                )
-            }
-        } else {
-            sensorManager.unregisterListener(sensorListener)
-            luxCurrent = 0f
-            luxStatus = "—"
-            accelCurrent = 0f
-            accelStatus = "—"
+    DisposableEffect(sensorManager, lightSensor, accelerometerSensor, sensorListener) {
+        lightSensor?.let {
+            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
+        accelerometerSensor?.let {
+            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+
+        onDispose { sensorManager.unregisterListener(sensorListener) }
     }
 
-    DisposableEffect(Unit) { onDispose { sensorManager.unregisterListener(sensorListener) } }
+    val lightStatus =
+            when {
+                lightSensor == null -> "Este teléfono no tiene sensor de luz."
+                !hasLightReading -> "Esperando una lectura…"
+                luxCurrent > currentLightThreshold -> "Por encima del umbral guardado."
+                else -> "Por debajo del umbral guardado."
+            }
 
-    Column(modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Button(onClick = onBack) { Text(text = "Volver") }
+    val motionStatus =
+            when {
+                accelerometerSensor == null -> "Este teléfono no tiene acelerómetro."
+                !hasMotionReading -> "Esperando una lectura…"
+                accelCurrent > currentMotionThreshold -> "En movimiento según el umbral guardado."
+                else -> "En reposo según el umbral guardado."
+            }
 
-        Text(text = "Configuración", style = MaterialTheme.typography.headlineMedium)
+    LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item { Text(text = "Configuración", style = MaterialTheme.typography.headlineMedium) }
 
-        Text(text = "Detección de acceso", style = MaterialTheme.typography.titleLarge)
+        item {
+            Text(text = "Calibración en tiempo real", style = MaterialTheme.typography.titleLarge)
+        }
 
-        OutlinedTextField(
-                value = lightThresholdText,
-                onValueChange = {
-                    lightThresholdText = it
-                    validationError = null
-                    changesSaved = false
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Umbral de luz (lux)") },
-                keyboardOptions =
-                        androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = KeyboardType.Decimal
-                        ),
-                singleLine = true
-        )
+        item { Text(text = "Sensor de luz", style = MaterialTheme.typography.titleMedium) }
 
-        OutlinedTextField(
-                value = motionThresholdText,
-                onValueChange = {
-                    motionThresholdText = it
-                    validationError = null
-                    changesSaved = false
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = "Umbral de movimiento") },
-                keyboardOptions =
-                        androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = KeyboardType.Decimal
-                        ),
-                singleLine = true
-        )
+        item {
+            Text(
+                    text =
+                            if (hasLightReading) {
+                                "Lux actual: ${luxCurrent.toInt()} lux"
+                            } else {
+                                "Lux actual: esperando lectura…"
+                            }
+            )
+        }
 
-        Text(
-                text =
-                        "Cuando una lectura supera uno de estos valores, " +
-                                "puede registrarse una visita.",
-                style = MaterialTheme.typography.bodyMedium
-        )
+        item { Text(text = lightStatus, style = MaterialTheme.typography.bodyMedium) }
+
+        item {
+            Text(
+                    text = "Umbral guardado: ${currentLightThreshold.toInt()} lux",
+                    style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item { Text(text = "Sensor de movimiento", style = MaterialTheme.typography.titleMedium) }
+
+        item {
+            Text(
+                    text =
+                            if (hasMotionReading) {
+                                "Movimiento actual: ${formatDecimal(accelCurrent)} m/s²"
+                            } else {
+                                "Movimiento actual: esperando lectura…"
+                            }
+            )
+        }
+
+        item { Text(text = motionStatus, style = MaterialTheme.typography.bodyMedium) }
+
+        item {
+            Text(
+                    text = "Umbral guardado: ${formatDecimal(currentMotionThreshold)} m/s²",
+                    style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                    text = "Configuración de los umbrales",
+                    style = MaterialTheme.typography.titleLarge
+            )
+        }
+
+        item {
+            Text(
+                    text =
+                            "Los valores se aplican al pulsar Guardar cambios. " +
+                                    "Mientras esta pantalla está abierta solo se muestran mediciones; " +
+                                    "no se registran visitas desde esta pantalla.",
+                    style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            OutlinedTextField(
+                    value = lightThresholdText,
+                    onValueChange = {
+                        lightThresholdText = it
+                        validationError = null
+                        hasUnsavedChanges = true
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = "Umbral de luz (lux)") },
+                    keyboardOptions =
+                            androidx.compose.foundation.text.KeyboardOptions(
+                                    keyboardType = KeyboardType.Decimal
+                            ),
+                    singleLine = true
+            )
+        }
+
+        item {
+            OutlinedTextField(
+                    value = motionThresholdText,
+                    onValueChange = {
+                        motionThresholdText = it
+                        validationError = null
+                        hasUnsavedChanges = true
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = "Umbral de movimiento (m/s²)") },
+                    keyboardOptions =
+                            androidx.compose.foundation.text.KeyboardOptions(
+                                    keyboardType = KeyboardType.Decimal
+                            ),
+                    singleLine = true
+            )
+        }
 
         validationError?.let { error ->
-            Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-            )
+            item {
+                Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
 
-        if (changesSaved) {
-            Text(
-                    text = "Cambios guardados.",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyMedium
-            )
+        if (hasUnsavedChanges) {
+            item {
+                Text(
+                        text = "Hay cambios sin guardar.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
 
-        Button(
-                onClick = {
-                    val lightThreshold = lightThresholdText.replace(',', '.').toFloatOrNull()
-                    val motionThreshold = motionThresholdText.replace(',', '.').toFloatOrNull()
+        item {
+            Button(
+                    onClick = {
+                        val lightThreshold = lightThresholdText.replace(',', '.').toFloatOrNull()
+                        val motionThreshold = motionThresholdText.replace(',', '.').toFloatOrNull()
 
-                    if (lightThreshold == null ||
-                                    motionThreshold == null ||
-                                    lightThreshold < 0f ||
-                                    motionThreshold < 0f
-                    ) {
-                        validationError = "Introduce valores numéricos iguales o mayores que cero."
-                        changesSaved = false
-                    } else {
-                        viewModel.saveThresholds(
-                                lightThreshold = lightThreshold,
-                                motionThreshold = motionThreshold
-                        )
-                        validationError = null
-                        changesSaved = true
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-        ) { Text(text = "Guardar cambios") }
+                        if (lightThreshold == null ||
+                                        motionThreshold == null ||
+                                        lightThreshold < 0f ||
+                                        motionThreshold < 0f
+                        ) {
+                            validationError =
+                                    "Introduce valores numéricos iguales o mayores que cero."
+                        } else {
+                            viewModel.saveThresholds(
+                                    lightThreshold = lightThreshold,
+                                    motionThreshold = motionThreshold
+                            )
+                            validationError = null
+                            hasUnsavedChanges = false
+                        }
+                    },
+                    enabled = hasUnsavedChanges,
+                    modifier = Modifier.fillMaxWidth()
+            ) { Text(text = "Guardar cambios") }
+        }
 
-        // Sección de calibración en tiempo real
-        Text(text = "Calibración en tiempo real", style = MaterialTheme.typography.titleLarge)
-
-        Text(text = "Sensor de luz", style = MaterialTheme.typography.titleMedium)
-        Text(text = "Lux actual: ${luxCurrent.toInt()}")
-        Text(text = "Estado: $luxStatus")
-
-        Text(text = "Sensor de movimiento", style = MaterialTheme.typography.titleMedium)
-        Text(text = "Aceleración: ${String.format("%.2f", accelCurrent)} m/s²")
-        Text(text = "Estado: $accelStatus")
-
-        Button(onClick = { isTestMode = !isTestMode }, modifier = Modifier.fillMaxWidth()) {
-            Text(text = if (isTestMode) "Detener prueba" else "Probar sin guardar visitas")
+        item {
+            Text(
+                    text =
+                            if (hasUnsavedChanges) {
+                                "Los valores editados todavía no están activos."
+                            } else {
+                                "Los umbrales mostrados corresponden a la configuración guardada."
+                            },
+                    style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
 
+private const val GRAVITY = 9.81f
+
+private fun formatDecimal(value: Float): String = "%.2f".format(value)

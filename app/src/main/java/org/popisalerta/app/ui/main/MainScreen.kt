@@ -27,7 +27,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import java.util.Date
-import org.popisalerta.app.Settings
 import org.popisalerta.app.data.AlertSettingsRepository
 import org.popisalerta.app.data.DefaultBathroomVisitRepository
 import org.popisalerta.app.data.local.AccessDatabase
@@ -68,10 +67,6 @@ fun MainScreen(onItemClick: (NavKey) -> Unit, modifier: Modifier = Modifier) {
                                 "Reactivar avisos"
                             }
             )
-        }
-
-        Button(onClick = { onItemClick(Settings) }, modifier = Modifier.fillMaxWidth()) {
-            Text(text = "Configuración")
         }
 
         Text(text = "Visitas al baño", style = MaterialTheme.typography.titleLarge)
