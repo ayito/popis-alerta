@@ -8,7 +8,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import org.popisalerta.app.ui.calibration.CalibrationScreen
 import org.popisalerta.app.ui.main.MainScreen
 import org.popisalerta.app.ui.settings.SettingsScreen
 
@@ -29,12 +28,6 @@ fun MainNavigation() {
                         }
                         entry<Settings> {
                             SettingsScreen(
-                                    onBack = { backStack.removeLastOrNull() },
-                                    modifier = Modifier.safeDrawingPadding().padding(16.dp)
-                            )
-                        }
-                        entry<Calibration> {
-                            CalibrationScreen(
                                     onBack = { backStack.removeLastOrNull() },
                                     modifier = Modifier.safeDrawingPadding().padding(16.dp)
                             )
