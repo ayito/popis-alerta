@@ -334,6 +334,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             lightThreshold = lightThreshold,
                             motionThreshold = motionThreshold
                         )
+                        // Normalizar el texto mostrado
+                        lightThresholdText =
+                            String.format(java.util.Locale.getDefault(), "%.2f", lightThreshold)
+                        motionThresholdText =
+                            String.format(java.util.Locale.getDefault(), "%.2f", motionThreshold)
                         validationError = null
                         hasUnsavedChanges = false
                     }
@@ -363,4 +368,5 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
 private const val GRAVITY = 9.81f
 
-private fun formatDecimal(value: Float): String = "%.2f".format(value)
+private fun formatDecimal(value: Float): String =
+    String.format(java.util.Locale.getDefault(), "%.2f", value)
