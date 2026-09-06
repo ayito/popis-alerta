@@ -16,6 +16,17 @@ class PopisAlertaApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        // Configurar locale de la app para Android 13+
+        androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+            androidx.core.os.LocaleListCompat.create(java.util.Locale("es", "ES"))
+        )
+
+        val currentLocale = java.util.Locale.getDefault()
+        android.util.Log.d(
+            "Locale-Check",
+            "Locale: $currentLocale displayName=${currentLocale.displayName}"
+        )
+
         val database = AccessDatabase.getInstance(this)
         alertSettingsRepository = AlertSettingsRepository(this)
 

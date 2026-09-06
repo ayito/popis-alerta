@@ -10,13 +10,13 @@ import org.popisalerta.app.SensorThresholds
 class SensorSettingsRepository(context: Context) : SensorThresholds {
 
     private val preferences: SharedPreferences =
-            context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+        context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
     private val _lightThreshold =
-            MutableStateFlow(preferences.getFloat(LIGHT_THRESHOLD_KEY, DEFAULT_LIGHT_THRESHOLD))
+        MutableStateFlow(preferences.getFloat(LIGHT_THRESHOLD_KEY, DEFAULT_LIGHT_THRESHOLD))
 
     private val _motionThreshold =
-            MutableStateFlow(preferences.getFloat(MOTION_THRESHOLD_KEY, DEFAULT_MOTION_THRESHOLD))
+        MutableStateFlow(preferences.getFloat(MOTION_THRESHOLD_KEY, DEFAULT_MOTION_THRESHOLD))
 
     val lightThreshold: Flow<Float> = _lightThreshold.asStateFlow()
     val motionThreshold: Flow<Float> = _motionThreshold.asStateFlow()
@@ -41,7 +41,7 @@ class SensorSettingsRepository(context: Context) : SensorThresholds {
         const val PREFERENCES_NAME = "sensor_settings"
         const val LIGHT_THRESHOLD_KEY = "light_threshold"
         const val MOTION_THRESHOLD_KEY = "motion_threshold"
-        const val DEFAULT_LIGHT_THRESHOLD = 100f
-        const val DEFAULT_MOTION_THRESHOLD = 2f
+        const val DEFAULT_LIGHT_THRESHOLD = 30f
+        const val DEFAULT_MOTION_THRESHOLD = 1.5f
     }
 }
