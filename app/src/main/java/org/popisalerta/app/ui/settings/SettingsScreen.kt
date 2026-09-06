@@ -51,9 +51,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         )
 
     var lightThresholdText by
-        remember(savedLightThreshold) { mutableStateOf(savedLightThreshold.toString()) }
+        remember(savedLightThreshold) { mutableStateOf(formatDecimal(savedLightThreshold)) }
     var motionThresholdText by
-        remember(savedMotionThreshold) { mutableStateOf(savedMotionThreshold.toString()) }
+        remember(savedMotionThreshold) { mutableStateOf(formatDecimal(savedMotionThreshold)) }
+
     var validationError by remember { mutableStateOf<String?>(null) }
     var hasUnsavedChanges by remember { mutableStateOf(false) }
 
@@ -69,9 +70,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     }
     val lightSensor = remember { sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) }
-    val accelerometerSensor = remember {
-        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-    }
+    val accelerometerSensor = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
 
     val sensorListener = remember {
         object : SensorEventListener {
@@ -114,9 +113,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        onDispose {
-            sensorManager.unregisterListener(sensorListener)
-        }
+        onDispose { sensorManager.unregisterListener(sensorListener) }
     }
 
     val lightStatus =
@@ -146,10 +143,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
     val validationErrorMessage = stringResource(R.string.settings_validation_error)
 
-    LazyColumn(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Text(
                 text = stringResource(R.string.settings_title),
@@ -175,22 +169,14 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             Text(
                 text =
                     if (hasLightReading) {
-                        stringResource(
-                            R.string.settings_current_lux,
-                            luxCurrent.toInt()
-                        )
+                        stringResource(R.string.settings_current_lux, luxCurrent.toInt())
                     } else {
                         stringResource(R.string.settings_current_lux_waiting)
                     }
             )
         }
 
-        item {
-            Text(
-                text = lightStatus,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+        item { Text(text = lightStatus, style = MaterialTheme.typography.bodyMedium) }
 
         item {
             Text(
@@ -224,12 +210,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        item {
-            Text(
-                text = motionStatus,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+        item { Text(text = motionStatus, style = MaterialTheme.typography.bodyMedium) }
 
         item {
             Text(
@@ -322,8 +303,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     val lightThreshold = lightThresholdText.replace(',', '.').toFloatOrNull()
                     val motionThreshold = motionThresholdText.replace(',', '.').toFloatOrNull()
 
-                    if (
-                        lightThreshold == null ||
+                    if (lightThreshold == null ||
                         motionThreshold == null ||
                         lightThreshold < 0f ||
                         motionThreshold < 0f
@@ -336,18 +316,24 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         )
                         // Normalizar el texto mostrado
                         lightThresholdText =
-                            String.format(java.util.Locale.getDefault(), "%.2f", lightThreshold)
+                            String.format(
+                                java.util.Locale.getDefault(),
+                                "%.2f",
+                                lightThreshold
+                            )
                         motionThresholdText =
-                            String.format(java.util.Locale.getDefault(), "%.2f", motionThreshold)
+                            String.format(
+                                java.util.Locale.getDefault(),
+                                "%.2f",
+                                motionThreshold
+                            )
                         validationError = null
                         hasUnsavedChanges = false
                     }
                 },
                 enabled = hasUnsavedChanges,
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = stringResource(R.string.settings_save_action))
-            }
+            ) { Text(text = stringResource(R.string.settings_save_action)) }
         }
 
         item {
