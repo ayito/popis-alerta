@@ -7,31 +7,31 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface BathroomVisitDao {
+interface RoomVisitDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(visit: BathroomVisitEntity): Long
+    suspend fun insert(visit: RoomVisitEntity): Long
 
     @Query(
         """
-        SELECT * FROM bathroom_visits
+        SELECT * FROM room_visits
         ORDER BY startedAt DESC
         """
     )
-    fun getAllVisits(): Flow<List<BathroomVisitEntity>>
+    fun getAllVisits(): Flow<List<RoomVisitEntity>>
 
     @Query(
         """
-        SELECT * FROM bathroom_visits
+        SELECT * FROM room_visits
         ORDER BY startedAt DESC
         LIMIT 1
         """
     )
-    suspend fun getLastVisit(): BathroomVisitEntity?
+    suspend fun getLastVisit(): RoomVisitEntity?
 
-    @Query("SELECT COUNT(*) FROM bathroom_visits")
+    @Query("SELECT COUNT(*) FROM room_visits")
     suspend fun getVisitCount(): Long
 
-    @Query("DELETE FROM bathroom_visits")
+    @Query("DELETE FROM room_visits")
     suspend fun deleteAll()
 }

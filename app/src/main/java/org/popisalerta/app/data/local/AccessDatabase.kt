@@ -11,9 +11,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [
         AccessEntity::class,
         RoomEntryEntity::class,
-        BathroomVisitEntity::class
+        RoomVisitEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AccessDatabase : RoomDatabase() {
@@ -22,7 +22,7 @@ abstract class AccessDatabase : RoomDatabase() {
 
     abstract fun roomEntryDao(): RoomEntryDao
 
-    abstract fun bathroomVisitDao(): BathroomVisitDao
+    abstract fun roomVisitDao(): RoomVisitDao
 
     companion object {
         private const val TAG = "PopisAlerta"
@@ -40,21 +40,8 @@ abstract class AccessDatabase : RoomDatabase() {
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
-                        Log.d(TAG, "Room Callback: onCreate() called")
+                        Log.d(TAG, "Room database created")
                         super.onCreate(db)
-                    }
-
-                    override fun onOpen(db: SupportSQLiteDatabase) {
-                        Log.d(TAG, "Room Callback: onOpen() called")
-                        // Verificar tablas
-                        val cursor = db.query("SELECT name FROM sqlite_master WHERE type='table'")
-                        val tables = mutableListOf<String>()
-                        while (cursor.moveToNext()) {
-                            tables.add(cursor.getString(0))
-                        }
-                        cursor.close()
-                        Log.d(TAG, "Room Callback: Tables in DB: ${tables.joinToString()}")
-                        super.onOpen(db)
                     }
                 })
                 .build()

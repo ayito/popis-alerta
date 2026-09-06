@@ -22,12 +22,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlin.math.abs
 import kotlin.math.sqrt
+import org.popisalerta.app.R
 import org.popisalerta.app.data.SensorSettingsRepository
 
 @Composable
@@ -35,23 +37,23 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val viewModel: SettingsViewModel = viewModel {
         SettingsViewModel(
-                sensorSettingsRepository = SensorSettingsRepository(context.applicationContext)
+            sensorSettingsRepository = SensorSettingsRepository(context.applicationContext)
         )
     }
 
     val savedLightThreshold by
-            viewModel.lightThreshold.collectAsStateWithLifecycle(
-                    initialValue = viewModel.currentLightThreshold()
-            )
+        viewModel.lightThreshold.collectAsStateWithLifecycle(
+            initialValue = viewModel.currentLightThreshold()
+        )
     val savedMotionThreshold by
-            viewModel.motionThreshold.collectAsStateWithLifecycle(
-                    initialValue = viewModel.currentMotionThreshold()
-            )
+        viewModel.motionThreshold.collectAsStateWithLifecycle(
+            initialValue = viewModel.currentMotionThreshold()
+        )
 
     var lightThresholdText by
-            remember(savedLightThreshold) { mutableStateOf(savedLightThreshold.toString()) }
+        remember(savedLightThreshold) { mutableStateOf(savedLightThreshold.toString()) }
     var motionThresholdText by
-            remember(savedMotionThreshold) { mutableStateOf(savedMotionThreshold.toString()) }
+        remember(savedMotionThreshold) { mutableStateOf(savedMotionThreshold.toString()) }
     var validationError by remember { mutableStateOf<String?>(null) }
     var hasUnsavedChanges by remember { mutableStateOf(false) }
 
@@ -67,7 +69,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     }
     val lightSensor = remember { sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) }
-    val accelerometerSensor = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
+    val accelerometerSensor = remember {
+        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    }
 
     val sensorListener = remember {
         object : SensorEventListener {
@@ -77,6 +81,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         luxCurrent = event.values[0]
                         hasLightReading = true
                     }
+
                     Sensor.TYPE_ACCELEROMETER -> {
                         val ax = event.values[0]
                         val ay = event.values[1]
@@ -94,142 +99,209 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     }
 
     DisposableEffect(sensorManager, lightSensor, accelerometerSensor, sensorListener) {
-        lightSensor?.let {
-            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_NORMAL)
+        lightSensor?.let { sensor ->
+            sensorManager.registerListener(
+                sensorListener,
+                sensor,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
         }
-        accelerometerSensor?.let {
-            sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_NORMAL)
+        accelerometerSensor?.let { sensor ->
+            sensorManager.registerListener(
+                sensorListener,
+                sensor,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
         }
 
-        onDispose { sensorManager.unregisterListener(sensorListener) }
+        onDispose {
+            sensorManager.unregisterListener(sensorListener)
+        }
     }
 
     val lightStatus =
-            when {
-                lightSensor == null -> "Este teléfono no tiene sensor de luz."
-                !hasLightReading -> "Esperando una lectura…"
-                luxCurrent > currentLightThreshold -> "Por encima del umbral guardado."
-                else -> "Por debajo del umbral guardado."
-            }
+        when {
+            lightSensor == null -> stringResource(R.string.settings_light_sensor_unavailable)
+
+            !hasLightReading -> stringResource(R.string.settings_waiting_reading)
+
+            luxCurrent > currentLightThreshold ->
+                stringResource(R.string.settings_light_above_threshold)
+
+            else -> stringResource(R.string.settings_light_below_threshold)
+        }
 
     val motionStatus =
-            when {
-                accelerometerSensor == null -> "Este teléfono no tiene acelerómetro."
-                !hasMotionReading -> "Esperando una lectura…"
-                accelCurrent > currentMotionThreshold -> "En movimiento según el umbral guardado."
-                else -> "En reposo según el umbral guardado."
-            }
+        when {
+            accelerometerSensor == null ->
+                stringResource(R.string.settings_motion_sensor_unavailable)
 
-    LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { Text(text = "Configuración", style = MaterialTheme.typography.headlineMedium) }
+            !hasMotionReading -> stringResource(R.string.settings_waiting_reading)
 
-        item {
-            Text(text = "Calibración en tiempo real", style = MaterialTheme.typography.titleLarge)
+            accelCurrent > currentMotionThreshold ->
+                stringResource(R.string.settings_motion_above_threshold)
+
+            else -> stringResource(R.string.settings_motion_below_threshold)
         }
 
-        item { Text(text = "Sensor de luz", style = MaterialTheme.typography.titleMedium) }
+    val validationErrorMessage = stringResource(R.string.settings_validation_error)
 
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         item {
             Text(
-                    text =
-                            if (hasLightReading) {
-                                "Lux actual: ${luxCurrent.toInt()} lux"
-                            } else {
-                                "Lux actual: esperando lectura…"
-                            }
-            )
-        }
-
-        item { Text(text = lightStatus, style = MaterialTheme.typography.bodyMedium) }
-
-        item {
-            Text(
-                    text = "Umbral guardado: ${currentLightThreshold.toInt()} lux",
-                    style = MaterialTheme.typography.bodyMedium
-            )
-        }
-
-        item { Text(text = "Sensor de movimiento", style = MaterialTheme.typography.titleMedium) }
-
-        item {
-            Text(
-                    text =
-                            if (hasMotionReading) {
-                                "Movimiento actual: ${formatDecimal(accelCurrent)} m/s²"
-                            } else {
-                                "Movimiento actual: esperando lectura…"
-                            }
-            )
-        }
-
-        item { Text(text = motionStatus, style = MaterialTheme.typography.bodyMedium) }
-
-        item {
-            Text(
-                    text = "Umbral guardado: ${formatDecimal(currentMotionThreshold)} m/s²",
-                    style = MaterialTheme.typography.bodyMedium
+                text = stringResource(R.string.settings_title),
+                style = MaterialTheme.typography.headlineMedium
             )
         }
 
         item {
             Text(
-                    text = "Configuración de los umbrales",
-                    style = MaterialTheme.typography.titleLarge
+                text = stringResource(R.string.settings_live_calibration_title),
+                style = MaterialTheme.typography.titleLarge
             )
         }
 
         item {
             Text(
-                    text =
-                            "Los valores se aplican al pulsar Guardar cambios. " +
-                                    "Mientras esta pantalla está abierta solo se muestran mediciones; " +
-                                    "no se registran visitas desde esta pantalla.",
-                    style = MaterialTheme.typography.bodyMedium
+                text = stringResource(R.string.settings_light_sensor_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        item {
+            Text(
+                text =
+                    if (hasLightReading) {
+                        stringResource(
+                            R.string.settings_current_lux,
+                            luxCurrent.toInt()
+                        )
+                    } else {
+                        stringResource(R.string.settings_current_lux_waiting)
+                    }
+            )
+        }
+
+        item {
+            Text(
+                text = lightStatus,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                text =
+                    stringResource(
+                        R.string.settings_saved_lux_threshold,
+                        currentLightThreshold.toInt()
+                    ),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                text = stringResource(R.string.settings_motion_sensor_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        item {
+            Text(
+                text =
+                    if (hasMotionReading) {
+                        stringResource(
+                            R.string.settings_current_motion,
+                            formatDecimal(accelCurrent)
+                        )
+                    } else {
+                        stringResource(R.string.settings_current_motion_waiting)
+                    }
+            )
+        }
+
+        item {
+            Text(
+                text = motionStatus,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                text =
+                    stringResource(
+                        R.string.settings_saved_motion_threshold,
+                        formatDecimal(currentMotionThreshold)
+                    ),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                text = stringResource(R.string.settings_thresholds_title),
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
+
+        item {
+            Text(
+                text = stringResource(R.string.settings_thresholds_help),
+                style = MaterialTheme.typography.bodyMedium
             )
         }
 
         item {
             OutlinedTextField(
-                    value = lightThresholdText,
-                    onValueChange = {
-                        lightThresholdText = it
-                        validationError = null
-                        hasUnsavedChanges = true
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = "Umbral de luz (lux)") },
-                    keyboardOptions =
-                            androidx.compose.foundation.text.KeyboardOptions(
-                                    keyboardType = KeyboardType.Decimal
-                            ),
-                    singleLine = true
+                value = lightThresholdText,
+                onValueChange = {
+                    lightThresholdText = it
+                    validationError = null
+                    hasUnsavedChanges = true
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text(text = stringResource(R.string.settings_light_threshold_label))
+                },
+                keyboardOptions =
+                    androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    ),
+                singleLine = true
             )
         }
 
         item {
             OutlinedTextField(
-                    value = motionThresholdText,
-                    onValueChange = {
-                        motionThresholdText = it
-                        validationError = null
-                        hasUnsavedChanges = true
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = "Umbral de movimiento (m/s²)") },
-                    keyboardOptions =
-                            androidx.compose.foundation.text.KeyboardOptions(
-                                    keyboardType = KeyboardType.Decimal
-                            ),
-                    singleLine = true
+                value = motionThresholdText,
+                onValueChange = {
+                    motionThresholdText = it
+                    validationError = null
+                    hasUnsavedChanges = true
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text(text = stringResource(R.string.settings_motion_threshold_label))
+                },
+                keyboardOptions =
+                    androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    ),
+                singleLine = true
             )
         }
 
         validationError?.let { error ->
             item {
                 Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -237,49 +309,53 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         if (hasUnsavedChanges) {
             item {
                 Text(
-                        text = "Hay cambios sin guardar.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
+                    text = stringResource(R.string.settings_unsaved_changes),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
 
         item {
             Button(
-                    onClick = {
-                        val lightThreshold = lightThresholdText.replace(',', '.').toFloatOrNull()
-                        val motionThreshold = motionThresholdText.replace(',', '.').toFloatOrNull()
+                onClick = {
+                    val lightThreshold = lightThresholdText.replace(',', '.').toFloatOrNull()
+                    val motionThreshold = motionThresholdText.replace(',', '.').toFloatOrNull()
 
-                        if (lightThreshold == null ||
-                                        motionThreshold == null ||
-                                        lightThreshold < 0f ||
-                                        motionThreshold < 0f
-                        ) {
-                            validationError =
-                                    "Introduce valores numéricos iguales o mayores que cero."
-                        } else {
-                            viewModel.saveThresholds(
-                                    lightThreshold = lightThreshold,
-                                    motionThreshold = motionThreshold
-                            )
-                            validationError = null
-                            hasUnsavedChanges = false
-                        }
-                    },
-                    enabled = hasUnsavedChanges,
-                    modifier = Modifier.fillMaxWidth()
-            ) { Text(text = "Guardar cambios") }
+                    if (
+                        lightThreshold == null ||
+                        motionThreshold == null ||
+                        lightThreshold < 0f ||
+                        motionThreshold < 0f
+                    ) {
+                        validationError = validationErrorMessage
+                    } else {
+                        viewModel.saveThresholds(
+                            lightThreshold = lightThreshold,
+                            motionThreshold = motionThreshold
+                        )
+                        validationError = null
+                        hasUnsavedChanges = false
+                    }
+                },
+                enabled = hasUnsavedChanges,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = stringResource(R.string.settings_save_action))
+            }
         }
 
         item {
             Text(
-                    text =
-                            if (hasUnsavedChanges) {
-                                "Los valores editados todavía no están activos."
-                            } else {
-                                "Los umbrales mostrados corresponden a la configuración guardada."
-                            },
-                    style = MaterialTheme.typography.bodyMedium
+                text =
+                    stringResource(
+                        if (hasUnsavedChanges) {
+                            R.string.settings_values_not_active
+                        } else {
+                            R.string.settings_values_saved
+                        }
+                    ),
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }

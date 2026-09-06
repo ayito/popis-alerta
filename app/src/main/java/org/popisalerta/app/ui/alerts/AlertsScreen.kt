@@ -1,4 +1,4 @@
-package org.popisalerta.app.ui.main
+package org.popisalerta.app.ui.alerts
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -22,11 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation3.runtime.NavKey
 import java.util.Date
 import org.popisalerta.app.R
 import org.popisalerta.app.Sensors
@@ -34,19 +31,16 @@ import org.popisalerta.app.data.AlertSettingsRepository
 import org.popisalerta.app.data.DefaultRoomVisitRepository
 import org.popisalerta.app.data.local.AccessDatabase
 import org.popisalerta.app.data.local.RoomVisitEntity
-import org.popisalerta.app.theme.PopisAlertaTheme
 
 @Composable
-fun MainScreen(
-    onItemClick: (NavKey) -> Unit,
+fun AlertsScreen(
     sensors: Sensors,
     alertSettingsRepository: AlertSettingsRepository,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-
-    val viewModel: MainScreenViewModel = viewModel {
-        MainScreenViewModel(
+    val viewModel: AlertsScreenViewModel = viewModel {
+        AlertsScreenViewModel(
             roomVisitRepository =
                 DefaultRoomVisitRepository(
                     AccessDatabase.getInstance(context).roomVisitDao()
@@ -61,7 +55,7 @@ fun MainScreen(
 
     Column(modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            text = stringResource(R.string.app_name),
+            text = stringResource(R.string.alerts_title),
             style = MaterialTheme.typography.headlineMedium
         )
 
@@ -96,12 +90,12 @@ fun MainScreen(
         )
 
         when (visitsState) {
-            VisitsUiState.Loading -> {
+            AlertsVisitsUiState.Loading -> {
                 Text(text = stringResource(R.string.visits_loading))
             }
 
-            is VisitsUiState.Success -> {
-                val visits = (visitsState as VisitsUiState.Success).visits
+            is AlertsVisitsUiState.Success -> {
+                val visits = (visitsState as AlertsVisitsUiState.Success).visits
 
                 Text(
                     text = stringResource(R.string.visit_count, visits.size),
@@ -119,10 +113,7 @@ fun MainScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(text = stringResource(R.string.visits_clear_action)) }
 
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(items = visits, key = { visit -> visit.id }) { visit ->
                             RoomVisitRow(visit)
                         }
@@ -130,8 +121,8 @@ fun MainScreen(
                 }
             }
 
-            is VisitsUiState.Error -> {
-                val error = (visitsState as VisitsUiState.Error).throwable.message.orEmpty()
+            is AlertsVisitsUiState.Error -> {
+                val error = (visitsState as AlertsVisitsUiState.Error).throwable.message.orEmpty()
 
                 Text(
                     text = stringResource(R.string.visits_load_error, error),
@@ -180,62 +171,6 @@ private fun RoomVisitRow(visit: RoomVisitEntity) {
                 style = MaterialTheme.typography.titleMedium
             )
             Text(text = "$date · $time", style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun MainScreenEmptyPreview() {
-    PopisAlertaTheme {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium
-            )
-            Text(
-                text = stringResource(R.string.alerts_active),
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = stringResource(R.string.visits_title),
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                text = stringResource(R.string.visit_empty),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun MainScreenWithVisitsPreview() {
-    PopisAlertaTheme {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium
-            )
-            Text(
-                text = stringResource(R.string.visits_title),
-                style = MaterialTheme.typography.titleLarge
-            )
-            RoomVisitRow(
-                visit =
-                    RoomVisitEntity(
-                        id = 1L,
-                        startedAt = 1_770_000_000_000L,
-                        notified = false
-                    )
-            )
         }
     }
 }

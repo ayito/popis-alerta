@@ -1,4 +1,4 @@
-package org.popisalerta.app.ui.main
+package org.popisalerta.app.ui.alerts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,22 +11,22 @@ import org.popisalerta.app.data.AlertSettingsRepository
 import org.popisalerta.app.data.RoomVisitRepository
 import org.popisalerta.app.data.local.RoomVisitEntity
 
-sealed interface VisitsUiState {
-    data object Loading : VisitsUiState
+sealed interface AlertsVisitsUiState {
+    data object Loading : AlertsVisitsUiState
 
-    data class Success(val visits: List<RoomVisitEntity>) : VisitsUiState
+    data class Success(val visits: List<RoomVisitEntity>) : AlertsVisitsUiState
 
-    data class Error(val throwable: Throwable) : VisitsUiState
+    data class Error(val throwable: Throwable) : AlertsVisitsUiState
 }
 
-class MainScreenViewModel(
+class AlertsScreenViewModel(
     private val roomVisitRepository: RoomVisitRepository,
     private val alertSettingsRepository: AlertSettingsRepository
 ) : ViewModel() {
 
-    private val _visitsUiState = MutableStateFlow<VisitsUiState>(VisitsUiState.Loading)
+    private val _visitsUiState = MutableStateFlow<AlertsVisitsUiState>(AlertsVisitsUiState.Loading)
 
-    val visitsUiState: StateFlow<VisitsUiState> = _visitsUiState.asStateFlow()
+    val visitsUiState: StateFlow<AlertsVisitsUiState> = _visitsUiState.asStateFlow()
 
     private val _alertsEnabled = MutableStateFlow(alertSettingsRepository.areAlertsEnabled())
 
@@ -42,10 +42,10 @@ class MainScreenViewModel(
             roomVisitRepository
                 .observeAllVisits()
                 .catch { throwable ->
-                    _visitsUiState.value = VisitsUiState.Error(throwable)
+                    _visitsUiState.value = AlertsVisitsUiState.Error(throwable)
                 }
                 .collect { visits ->
-                    _visitsUiState.value = VisitsUiState.Success(visits)
+                    _visitsUiState.value = AlertsVisitsUiState.Success(visits)
                 }
         }
     }
@@ -67,7 +67,7 @@ class MainScreenViewModel(
             try {
                 roomVisitRepository.deleteAllVisits()
             } catch (throwable: Throwable) {
-                _visitsUiState.value = VisitsUiState.Error(throwable)
+                _visitsUiState.value = AlertsVisitsUiState.Error(throwable)
             }
         }
     }

@@ -5,4 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object Main : NavKey
 
+@Serializable data object Alerts : NavKey
+
 @Serializable data object Settings : NavKey
