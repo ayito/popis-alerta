@@ -53,4 +53,6 @@
     <string name="settings_save_action">Guardar cambios</string>
     <string name="settings_values_not_active">Los valores editados todavía no están activos.</string>
     <string name="settings_values_saved">Los umbrales mostrados corresponden a la configuración guardada.</string>
+    <string name="settings_alert_phone_label">Teléfono para avisos por llamada</string>
+    <string name="settings_phone_validation_error">Introduce un teléfono válido: 9 dígitos españoles o número internacional con prefijo +</string>
 </resources>

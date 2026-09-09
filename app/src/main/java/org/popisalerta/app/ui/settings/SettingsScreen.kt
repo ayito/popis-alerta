@@ -49,11 +49,16 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         viewModel.motionThreshold.collectAsStateWithLifecycle(
             initialValue = viewModel.currentMotionThreshold()
         )
+    val savedAlertPhone by
+        viewModel.alertPhone.collectAsStateWithLifecycle(
+            initialValue = viewModel.currentAlertPhone()
+        )
 
     var lightThresholdText by
         remember(savedLightThreshold) { mutableStateOf(formatDecimal(savedLightThreshold)) }
     var motionThresholdText by
         remember(savedMotionThreshold) { mutableStateOf(formatDecimal(savedMotionThreshold)) }
+    var phoneText by remember(savedAlertPhone) { mutableStateOf(savedAlertPhone) }
 
     var validationError by remember { mutableStateOf<String?>(null) }
     var hasUnsavedChanges by remember { mutableStateOf(false) }
@@ -142,6 +147,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
 
     val validationErrorMessage = stringResource(R.string.settings_validation_error)
+    val phoneValidationErrorMessage = stringResource(R.string.settings_phone_validation_error)
 
     LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
@@ -277,6 +283,24 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
         }
 
+        item {
+            OutlinedTextField(
+                value = phoneText,
+                onValueChange = {
+                    phoneText = it
+                    validationError = null
+                    hasUnsavedChanges = true
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = stringResource(R.string.settings_alert_phone_label)) },
+                keyboardOptions =
+                    androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Phone
+                    ),
+                singleLine = true
+            )
+        }
+
         validationError?.let { error ->
             item {
                 Text(
@@ -302,33 +326,45 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 onClick = {
                     val lightThreshold = lightThresholdText.replace(',', '.').toFloatOrNull()
                     val motionThreshold = motionThresholdText.replace(',', '.').toFloatOrNull()
+                    val alertPhone = normalizeAlertPhone(phoneText)
 
-                    if (lightThreshold == null ||
-                        motionThreshold == null ||
-                        lightThreshold < 0f ||
-                        motionThreshold < 0f
-                    ) {
-                        validationError = validationErrorMessage
-                    } else {
-                        viewModel.saveThresholds(
-                            lightThreshold = lightThreshold,
-                            motionThreshold = motionThreshold
-                        )
-                        // Normalizar el texto mostrado
-                        lightThresholdText =
-                            String.format(
-                                java.util.Locale.getDefault(),
-                                "%.2f",
-                                lightThreshold
+                    when {
+                        lightThreshold == null ||
+                            motionThreshold == null ||
+                            lightThreshold < 0f ||
+                            motionThreshold < 0f -> {
+                            validationError = validationErrorMessage
+                        }
+
+                        alertPhone == null -> {
+                            validationError = phoneValidationErrorMessage
+                        }
+
+                        else -> {
+                            viewModel.saveThresholds(
+                                lightThreshold = lightThreshold,
+                                motionThreshold = motionThreshold
                             )
-                        motionThresholdText =
-                            String.format(
-                                java.util.Locale.getDefault(),
-                                "%.2f",
-                                motionThreshold
-                            )
-                        validationError = null
-                        hasUnsavedChanges = false
+                            viewModel.saveAlertPhone(alertPhone)
+
+                            // Normalizar los valores visibles después de guardarlos.
+                            lightThresholdText =
+                                String.format(
+                                    java.util.Locale.getDefault(),
+                                    "%.2f",
+                                    lightThreshold
+                                )
+                            motionThresholdText =
+                                String.format(
+                                    java.util.Locale.getDefault(),
+                                    "%.2f",
+                                    motionThreshold
+                                )
+                            phoneText = alertPhone
+
+                            validationError = null
+                            hasUnsavedChanges = false
+                        }
                     }
                 },
                 enabled = hasUnsavedChanges,
@@ -356,3 +392,23 @@ private const val GRAVITY = 9.81f
 
 private fun formatDecimal(value: Float): String =
     String.format(java.util.Locale.getDefault(), "%.2f", value)
+
+private fun normalizeAlertPhone(input: String): String? {
+    val compact = input.trim().replace(Regex("[\\s()\\-]"), "")
+
+    if (compact.isEmpty()) {
+        return ""
+    }
+
+    val internationalPhonePattern = Regex("^\\+[1-9]\\d{6,14}$")
+    if (internationalPhonePattern.matches(compact)) {
+        return compact
+    }
+
+    val spanishPhonePattern = Regex("^\\d{9}$")
+    if (spanishPhonePattern.matches(compact)) {
+        return "+34$compact"
+    }
+
+    return null
+}
